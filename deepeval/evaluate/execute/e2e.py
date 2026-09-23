@@ -27,6 +27,9 @@ from deepeval.metrics.utils import copy_metrics
 from deepeval.utils import (
     get_per_task_timeout_seconds,
     get_gather_timeout,
+    count_timeout_case,
+    should_abort_on_timeout,
+    reset_timeout_circuit,
 )
 from deepeval.telemetry import record_test_case
 from deepeval.metrics import (
@@ -74,6 +77,7 @@ from deepeval.evaluate.execute._common import (
     _await_with_outer_deadline,
     _execute_metric,
     _log_gather_timeout,
+    _log_abort_on_timeout,
     _timeout_msg,
 )
 
@@ -354,6 +358,9 @@ async def a_execute_test_cases(
     global_test_run_cache_manager.disable_write_cache = (
         cache_config.write_cache is False
     )
+    # 超时熔断计数器清零：每次 evaluate 独立计数
+    reset_timeout_circuit()
+
     if test_run_manager is None:
         test_run_manager = global_test_run_manager
 
@@ -443,6 +450,15 @@ async def a_execute_test_cases(
 
                 await asyncio.sleep(async_config.throttle_value)
 
+            # 超时熔断：尚未提交任务前已达阈值 → 全部取消（含未完成取消计数）
+            if should_abort_on_timeout():
+                for t in tasks:
+                    if not t.done():
+                        t.cancel()
+                await asyncio.gather(*tasks, return_exceptions=True)
+                _log_abort_on_timeout(logger)
+                return test_results
+
             try:
                 await asyncio.wait_for(
                     asyncio.gather(*tasks),
@@ -509,6 +525,15 @@ async def a_execute_test_cases(
                 tasks.append(asyncio.create_task((task)))
 
             await asyncio.sleep(async_config.throttle_value)
+
+        # 超时熔断：同上，任务已全部提交但 gather 前检查一次
+        if should_abort_on_timeout():
+            for t in tasks:
+                if not t.done():
+                    t.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            _log_abort_on_timeout(logger)
+            return test_results
 
         try:
             await asyncio.wait_for(
@@ -582,6 +607,13 @@ async def _a_execute_llm_test_cases(
             progress=progress,
         )
     except asyncio.CancelledError:
+        # 超时熔断计数：超时（外层 wait_for 取消）或熔断主动取消的用例
+        n = count_timeout_case()
+        if get_settings().DEEPEVAL_ABORT_ON_TIMEOUT:
+            logger.warning(
+                f"Evaluation aborted: timed-out test case #{n} "
+                f"(test case '{getattr(test_case, 'name', '?')}')."
+            )
         if get_settings().DEEPEVAL_DISABLE_TIMEOUTS:
             msg = (
                 "Cancelled while evaluating metric. "

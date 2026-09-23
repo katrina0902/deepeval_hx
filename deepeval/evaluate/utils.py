@@ -68,6 +68,7 @@ def create_metric_data(metric: BaseMetric) -> MetricData:
             inputTokenCount=metric.input_tokens,
             outputTokenCount=metric.output_tokens,
             verboseLogs=metric.verbose_logs,
+            viewParams=getattr(metric, "view_params", None),
         )
     else:
         return MetricData(
@@ -84,6 +85,7 @@ def create_metric_data(metric: BaseMetric) -> MetricData:
             inputTokenCount=metric.input_tokens,
             outputTokenCount=metric.output_tokens,
             verboseLogs=metric.verbose_logs,
+            viewParams=getattr(metric, "view_params", None),
         )
 
 

@@ -1,0 +1,31 @@
+# 大类：判断（所有判断类 AI 任务共享此配置）
+# meta 含义与结构同 extraction.yaml
+
+meta:
+  test_case:
+    required: [input, actual_output, expected_output]   # 判断类需要标准答案做对照
+    optional: [context, retrieval_context, name, tags]
+  evaluate:
+    identifier_prefix: "judgment"
+    display:
+      print_results: true
+      truncate_passing_cases: false
+    error:
+      ignore_errors: true
+      skip_on_missing_params: true
+
+# ---- 大类通用指标：判定的共性要求 ----
+metrics:
+  judgment_accuracy:
+    metric: geval
+    name: "判定准确性"
+    criteria: "判断输出给出的分类判定是否与参考判定（expected_output）一致，判定理由是否与输入材料相符。"
+    evaluation_params: [input, actual_output, expected_output]
+    threshold: 0.8
+
+  reason_sufficiency:
+    metric: geval
+    name: "理由充分性"
+    criteria: "判断输出是否给出了支撑其判定结论的具体理由，理由是否引用了输入材料中的事实（如当事人回应、沟通轮次、风险信号）。仅给结论不给理由视为不充分。"
+    evaluation_params: [input, actual_output]
+    threshold: 0.7

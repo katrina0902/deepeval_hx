@@ -301,6 +301,35 @@ def set_should_use_cache(yes: bool):
 ###################
 # Timeout Helpers #
 ###################
+# 超时熔断计数：一次 evaluate 内超时（含取消）的用例数。
+# evaluate 开始时清零（见 e2e._reset_timeout_circuit），
+# _a_execute_llm_test_cases 的 CancelledError 分支累加；
+# 达到 settings.DEEPEVAL_ABORT_ON_TIMEOUT 时 gather 层取消剩余任务。
+_timeout_case_count: int = 0
+
+
+def reset_timeout_circuit() -> None:
+    global _timeout_case_count
+    _timeout_case_count = 0
+
+
+def count_timeout_case() -> int:
+    """记录一个超时用例，返回当前累计数。"""
+    global _timeout_case_count
+    _timeout_case_count += 1
+    return _timeout_case_count
+
+
+def get_timeout_case_count() -> int:
+    return _timeout_case_count
+
+
+def should_abort_on_timeout() -> bool:
+    """超时熔断：累计超时用例数达到 DEEPEVAL_ABORT_ON_TIMEOUT 则 True。"""
+    limit = get_settings().DEEPEVAL_ABORT_ON_TIMEOUT
+    return bool(limit) and limit > 0 and _timeout_case_count >= int(limit)
+
+
 def are_timeouts_disabled() -> bool:
     return bool(get_settings().DEEPEVAL_DISABLE_TIMEOUTS)
 

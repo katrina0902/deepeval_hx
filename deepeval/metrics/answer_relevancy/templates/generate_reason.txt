@@ -1,28 +1,25 @@
-Given the answer relevancy score, the list of reasons of irrelevant statements made in the actual output, and the input, provide a CONCISE reason for the score. Explain why it is not higher, but also why it is at its current score.
-The irrelevant statements represent things in the actual output that is irrelevant to addressing whatever is asked/talked about in the input.
-If there is nothing irrelevant, just say something positive with an upbeat encouraging tone (but don't overdo it otherwise it gets annoying).
+你将获得：1）输入（input），2）与输入不相关的陈述列表（irrelevant statements），这些陈述来自实际输出。你的任务是解释本次回答的相关性质量。
 
-{% if multimodal %}{{ _fragments.multimodal_input_rules }}{% endif %}
+给定相关性得分（answer relevancy score，0~1，衡量回答与输入的相关程度，越高越好），请**简洁地**汇总不相关陈述，对该分数给出理由说明：为什么达不到更高分，以及为什么是当前这个分数。
 
 **
-IMPORTANT: Please make sure to only return in JSON format, with the 'reason' key providing the reason. Ensure all strings are closed appropriately. Repair any invalid JSON before you output it.
-
-Example:
-Example JSON:
+重要：仅返回 JSON 格式，key 为 reason，填入中文理由。
+示例 JSON：
 {
-  "reason": "The score is <answer_relevancy_score> because <your_reason>."
+  "reason": "该分数为 <answer_relevancy_score>，因为 <你的理由>。"
 }
-===== END OF EXAMPLE ======
+
+若无不相关陈述，直接给出正面评价（语气积极但不过度）。
+理由中必须引用不相关陈述中的信息，确保可信。
 **
 
-
-Answer Relevancy Score:
+相关性得分：
 {{ score }}
 
-Reasons why the score can't be higher based on irrelevant statements in the actual output:
+实际输出中不相关陈述及其原因：
 {{ irrelevant_statements }}
 
-Input:
+输入：
 {{ input }}
 
-JSON:
+JSON：

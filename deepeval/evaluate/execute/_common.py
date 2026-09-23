@@ -51,6 +51,17 @@ from deepeval.test_run.hyperparameters import (
 logger = logging.getLogger(__name__)
 
 
+def _log_abort_on_timeout(logger) -> None:
+    """超时熔断日志：已取消剩余任务，evaluate 正常收尾（保存/上传已完成部分）。"""
+    from deepeval.utils import get_timeout_case_count
+
+    logger.warning(
+        f"Evaluation aborted early: {get_timeout_case_count()} test case(s) "
+        "timed out (DEEPEVAL_ABORT_ON_TIMEOUT reached). Pending cases were "
+        "cancelled; completed cases are finalized normally."
+    )
+
+
 def _timeout_msg(action: str, seconds: float) -> str:
     if are_timeouts_disabled():
         return (

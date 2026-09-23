@@ -96,8 +96,8 @@ def assert_test(
 
     async_config = AsyncConfig(throttle_value=0, max_concurrent=100)
     display_config = DisplayConfig(
-        verbose_mode=should_verbose_print(), show_indicator=True
-    )
+        verbose_mode=should_verbose_print(), show_indicator=True 
+    ) # 显示进度指示器
     error_config = ErrorConfig(
         ignore_errors=should_ignore_errors(),
         skip_on_missing_params=should_skip_on_missing_params(),
@@ -190,9 +190,9 @@ def evaluate(
     hyperparameters: Optional[Dict[str, Union[str, int, float, Prompt]]] = None,
     # agnostic
     mcp_servers: Optional[List[Union[MCPServer, "OfficialMCPServer"]]] = None,
-    identifier: Optional[str] = None,
-    official: bool = False,
-    _skip_reset: bool = False,
+    identifier: Optional[str] = None,  # 本次运行名称（报告标题）
+    official: bool = False,  # 标记为 Confident AI 基线
+    _skip_reset: bool = False,  # 是否跳过重置（本地评估时）
     # Configs
     async_config: Optional[AsyncConfig] = AsyncConfig(),
     display_config: Optional[DisplayConfig] = DisplayConfig(),
@@ -261,7 +261,7 @@ def evaluate(
                 display_option=display_config.display_option,
             )
 
-            # Handle full, un-truncated file exports
+            # Handle full, un-truncated file exports  文件导出格式
             if display_config.file_output_dir is not None:
                 if display_config.file_type == "html":
                     console_report.export_to_html(

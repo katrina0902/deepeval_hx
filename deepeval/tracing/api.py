@@ -52,6 +52,10 @@ class MetricData(BaseModel):
     input_tokens: Optional[int] = Field(None, alias="inputTokenCount")
     output_tokens: Optional[int] = Field(None, alias="outputTokenCount")
     verbose_logs: Optional[str] = Field(None, alias="verboseLogs")
+    # Fork: 该指标实际使用的用例参数视图（不同指标可定制不同 input /
+    # actual_output / retrieval_context，报告按指标展示实际送评内容）。
+    # 由评估工程的 MetricView 在 measure 时写入，普通指标为 None。
+    view_params: Optional[Dict] = Field(None, alias="viewParams")
 
 
 class BaseApiSpan(BaseModel):

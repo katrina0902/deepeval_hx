@@ -1,0 +1,123 @@
+# 任务：案情概览（extraction/case_summary 与 extraction/case_overview_prod 共用）
+# 运行：
+#   python examples/finance_eval/run_eval.py --task extraction/case_summary          # 内置样例
+#   python examples/finance_eval/run_eval.py --task extraction/case_overview_prod    # 生产数据 2026-09-10
+# 指标 = 大类 extraction.yaml（摘要质量 + 事实忠实度）+ 本文件（JSON合规 + 相关性 + 4个自定义GEval）
+
+# ---- 版本管理：评估标准（criteria/schema/阈值）迭代时改这里 ----
+# template_version 会随每次运行记录进 test_run 的 hyperparameters，
+# 用于区分"哪一版标准跑出的结果"；报告对比时按此归因。
+meta:
+  hyperparameters:
+    template_version: "0903"
+  # ---- 参数化 input 模板：{参数名} 引用 input_text JSON 内字段 ----
+  # 可用字段：case_info / current_mediation_record /
+  #           previous_communication_summary / existing_case_overview
+  # （支持点路径，如 {case_info.subject_amount}）
+  input_template: |
+    任务：基于调解对话生成案件结构化摘要。
+    调解对话素材：【见retrieval_context】
+    上一轮案情概览：{existing_case_overview}
+    历史调解记录压缩总结：{previous_communication_summary}
+# ---- 业务 prompt 管理（被测系统给业务模型的提示词）----
+# 文本维护在 examples/finance_eval/prompts/<任务名>/<版本名>.md（纯 prompt，文件名即版本名），
+# 运行时自动取最新版本随 test_run 留档；
+# 云端上传开关在环境变量 PROMPT_PUSH_TO_CLOUD=true（.env.local，需 Confident AI 付费计划）。
+
+metrics:
+  json_format:
+    metric: json_correctness
+    name: "JSON结构合规"
+    threshold: 1
+    # retrieval_context 置空（不配 output_field 即透传完整输出）
+    # raw_input=true，则input为整个input_text原始JSON串
+    # actual_output = 整个 ai_response_content（不配output_field）
+    raw_input: true
+    # 输出 JSON 的期望结构（每个 ai 任务不同，与本任务 GEval 同文件维护）
+    schema:
+      case_brief: str
+      key_communication_facts:
+        type: object
+        fields:
+          party_basic_information: str
+          core_demands: str
+          plan_feedback_and_commitments: str
+          mediation_levers: str
+          risk_items: str
+
+  faithfulness:
+    metric: faithfulness
+    name: "事实忠实度"
+    evaluation_params: [input, actual_output, retrieval_context]
+    retrieval_fields: [current_mediation_record.dialogue_text]
+    threshold: 0.8
+
+  # ---- 以下指标按需定制素材（retrieval_fields）与被评输出（output_field）----
+  # retrieval_fields: input_text JSON 内哪些字段进 retrieval_context（素材块）
+  # output_field:     ai_response_content JSON 内哪个子字段作为 actual_output（支持点路径）
+  # 未配置则透传原始 input / actual_output
+
+  commitment_chain:
+    metric: geval
+    name: "方案承诺演变履约链完整度"
+    criteria: "检查plan_feedback_and_commitments是否完整还原了当事人的承诺演变与履约链路，仅包含当事人承诺，不包含其他内容：1. 是否完整提取每一轮承诺、承诺修改、履约时间节点；2. 是否遗漏关键承诺变更；3. 是否编造对话不存在的承诺内容；4. 是否错误合并多轮不同承诺，扭曲演变顺序；5.若输入材料中不存在任何承诺链，则该字段采用上一轮的plan_feedback_and_commitments或不输出任何内容，填入臆造内容为错误；5.评估时先判断演变链是否存在，再评完整度。"
+    evaluation_params: [input, actual_output, retrieval_context]
+    threshold: 0.7
+    retrieval_fields: [current_mediation_record]
+    output_field: key_communication_facts.plan_feedback_and_commitments
+
+  lever_value:
+    metric: geval
+    name: "调解抓手博弈价值度"
+    criteria: "评估mediation_levers提炼的调解抓手是否具有博弈价值：抓手应指向可实际施压或促成让步的信息（如失业可申请分期、逾期时长影响征信、对方有还款意愿但缺能力），而非空泛表述（如'加强沟通'、'保持联系'）。有价值的抓手应说明其可运用方向；case_info信息本身不作为调解抓手；输入中无可用抓手时采用上一轮的mediation_levers或不输出任何内容。"
+    evaluation_params: [input, actual_output, retrieval_context]
+    threshold: 0.7
+    retrieval_fields: [case_info, current_mediation_record]
+    output_field: key_communication_facts.mediation_levers
+
+  compliance_risk_capture:
+    metric: geval
+    name: "高敏合规与客诉风险捕获率"
+    criteria: "评估 risk_items 对高风险信号的捕获完整度。必查信号：当事人情绪激烈/辱骂（客诉风险）、身份存疑或冒用（合规风险）、提及投诉/媒体/诉讼（升级风险）、泄露无关第三人信息（隐私合规）。输入中存在但输出遗漏的信号计为漏捕；无中生有的风险项计为误报；在模型输出其他字段提及的信息不作为风险信号；输入中无风险信号时模型实际输出完全置空。"
+    evaluation_params: [input, actual_output, retrieval_context]
+    threshold: 0.8
+    retrieval_fields: [current_mediation_record.dialogue_text]
+    output_field: key_communication_facts
+
+  # conflict:
+  #   metric: geval
+  #   name: "矛盾事实"
+  #   criteria: "评估模型输出是否与案件信息冲突。仅针对已生成内容，不校验哪些内容未生成。必查信号：模型输出是否与case_info字段描述冲突。"
+  #   evaluation_params: [input, actual_output, retrieval_context]
+  #   threshold: 0.8
+  #   retrieval_fields: [case_info, current_mediation_record]
+
+  incremental_consistency:
+    metric: geval
+    name: "增量更新与上下文一致性"
+    criteria: "检查 actual_output 中的case_brief、key_communication_facts.party_basic_information、key_communication_facts.core_demands是否正确融合了的新进展，不检查未提及字段。对比 existing_case_overview，看历史核心结论是否被合理保留或更新，没有无故丢失关键信息，也没有将历史未发生的事当成现状。仅需从dialogue_text提取新增内容，其他字段皆只用来辅助判断；且已经知晓案件基本信息（例如申请人、平台、阶段、纠纷类型、标的、逾期天数等），无需模型从输入中提取和新增。"
+    evaluation_params: [input, actual_output, retrieval_context]
+    threshold: 0.8
+    retrieval_fields: [current_mediation_record]
+
+  mediator:
+    metric: geval
+    name: "调解员使用友好度"
+    criteria: "你是一名资深债务纠纷调解员，不检查内容是否真实、有无法律错误，你只评估：这份模型输出，调解员办案时好不好用，能不能辅助调解准备、减少整理案情的工作量。"
+    evaluation_steps:
+      - "1. 仅从调解员办案视角评估，**不校验内容事实对错（事实正确性由其他指标评估）。且已经知晓案件基本信息（例如申请人、平台、阶段、纠纷类型、标的、逾期天数等），无需模型输出整合。**；"
+      - "2. 是否提炼出调解员办案需要的关键信息，减少调解员自己梳理案情的工作量；"
+      - "3. 输出内容是否便于调解员直接使用（不校验输出的json格式）：提供可参考沟通要点、风险提示、调解推进思路等；"
+      - "4. 适配调解员特点：调解员普遍文化程度不高、长文本阅读能力弱。评估文本是否简短、语言通俗，避免大段密集文字、晦涩书面术语、超长段落；"
+      - "5. 综合判断：调解员拿到该回复，是否可以直接用于调解沟通准备，减少备课时间。"
+    evaluation_params: [input, actual_output, retrieval_context]
+    threshold: 0.8
+    retrieval_fields: [current_mediation_record]
+
+  # extraction_completeness:
+  #   metric: geval
+  #   name: "提取完整性度"
+  #   criteria: "检查 actual_output 是否完整包含了案件材料中的所有重要信息。必查信号：模型输出是否与案件材料中的所有重要信息匹配。(调解中心和被申请人名称不需要提取)"
+  #   evaluation_params: [input, actual_output, retrieval_context]
+  #   threshold: 0.7
+  #   retrieval_fields: [current_mediation_record.dialogue_text]

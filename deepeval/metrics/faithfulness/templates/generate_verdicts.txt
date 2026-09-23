@@ -1,19 +1,16 @@
-Based on the given claims, which is a list of strings, generate a list of JSON objects to indicate whether EACH claim contradicts any facts in the retrieval context. The JSON will have 2 fields: 'verdict' and 'reason'.
-The 'verdict' key should STRICTLY be either 'yes', 'no', or 'idk', which states whether the given claim agrees with the context. 
-Provide a 'reason' ONLY if the answer is 'no' or 'idk'. 
-The provided claim is drawn from the actual output. Try to provide a correction in the reason using the facts in the retrieval context.
+根据给定的判定字符串列表，生成JSON对象列表，判断**每一条判定**是否与检索上下文里的事实存在矛盾。JSON包含两个字段：`verdict` 和 `reason`。
 
+`verdict` 的取值**严格只能是** `yes`、`no`、`idk`，用来标记该判定是否与上下文内容相符。
+仅当判定结果为 `no` 或者 `idk` 时，才填写`reason`理由。
+这些判定取自AI模型实际输出。如果判定存在冲突，请在理由中利用检索上下文的事实给出修正内容。
 {{ _fragments.faithfulness_verdicts_format_instruction }}
 {% if multimodal %}{{ _fragments.faithfulness_verdicts_example_multimodal }}{% endif %}
-**
-IMPORTANT: Please make sure to only return in JSON format, with the 'verdicts' key as a list of JSON objects.
+
+**重要：请用中文回答，且仅返回JSON格式，顶层key为verdicts，值是JSON对象数组。**
 {% if multimodal %}{{ _fragments.faithfulness_verdicts_guidelines_multimodal }}{% endif %}{% if not multimodal %}{{ _fragments.faithfulness_verdicts_guidelines_text_only }}{% endif %}
-**
 
-Retrieval Contexts:
+检索上下文：
 {{ retrieval_context }}
-
-Claims:
+判定列表：
 {{ claims }}
-
-JSON:
+JSON：

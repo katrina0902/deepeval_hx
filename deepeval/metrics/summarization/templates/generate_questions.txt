@@ -1,14 +1,12 @@
-Based on the given text, generate {{ n }} closed-ended questions that can be answered with either a 'yes' or 'no'. 
-The questions generated should ALWAYS result in a 'yes' based on the given text. 
-
+根据给定文本，生成 {{ n }} 个封闭式问题，问题只能用 yes 或 no 作答。
+生成的所有问题，基于给定文本判断，答案都必须是 yes。
 {{ _fragments.multimodal_input_rules }}
 
-** IMPORTANT
-Only return a JSON with a 'questions' key, which is a list of strings. 
-The questions have to be STRICTLY closed ended.
-The given text should be able to answer 'yes' for each question.
-**
-Text:
-{{ text }}
+**重要要求**
+仅返回JSON，顶层key为 `questions`，值为字符串列表。
+问题必须是严格的封闭式问题。
+基于给定文本，每一个问题的答案都必须为 yes。
 
-JSON:
+文本：
+{{ text }}
+JSON：

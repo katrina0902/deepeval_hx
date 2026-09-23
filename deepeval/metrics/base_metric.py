@@ -53,16 +53,16 @@ class PromptMixin:
 
 class BaseMetric(PromptMixin):
     _required_params = List[SingleTurnParams]
-    threshold: Optional[float] = None
+    threshold: Optional[float] = None #及格线，score >= threshold 判 PASS 填法：0~1，建议 0.5~0.8
     score: Optional[float] = None
     score_breakdown: Dict = None
     reason: Optional[str] = None
     success: Optional[bool] = None
     evaluation_model: Optional[str] = None
-    strict_mode: bool = False
-    async_mode: bool = True
+    strict_mode: bool = False #严格模式：threshold 强制=1，必须满分	默认 False
+    async_mode: bool = True #是否异步执行（多指标并行更快）	默认 True
     verbose_mode: bool = True
-    include_reason: bool = False
+    include_reason: bool = True #是否调 LLM 生成 reason	默认 True（多一次调用）
     error: Optional[str] = None
     evaluation_cost: Optional[float] = None
     input_tokens: Optional[int] = None
@@ -133,7 +133,7 @@ class BaseConversationalMetric(PromptMixin):
     evaluation_model: Optional[str] = None
     strict_mode: bool = False
     async_mode: bool = True
-    verbose_mode: bool = True
+    verbose_mode: bool = True #打印中间步骤日志	调试时开
     include_reason: bool = False
     error: Optional[str] = None
     evaluation_cost: Optional[float] = None
@@ -141,7 +141,7 @@ class BaseConversationalMetric(PromptMixin):
     output_tokens: Optional[int] = None
     verbose_logs: Optional[str] = None
     skipped = False
-    flaky: bool = False
+    flaky: bool = False #容忍波动：失败只警告不判负	默认 False
     model: Optional[DeepEvalBaseLLM] = None
     using_native_model: Optional[bool] = None
 

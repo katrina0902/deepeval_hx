@@ -1,43 +1,39 @@
-For the provided list of statements, determine whether each statement is relevant to address the input.
-Generate JSON objects with 'verdict' and 'reason' fields.
-The 'verdict' should be 'yes' (relevant), 'no' (irrelevant), or 'idk' (ambiguous/supporting information).
-Provide 'reason' ONLY for 'no' or 'idk' verdicts.
-The statements are from an AI's actual output.
-
+针对给出的陈述列表，判断每一条陈述是否有助于解答输入问题。
+生成JSON对象，包含 `verdict` 和 `reason` 两个字段。
+`verdict` 的取值为 `yes`（相关）、`no`（无关）、`idk`（表述模糊/辅助参考信息）。
+**仅当 verdict 为 no 或者 idk 时，才填写 reason。**
+这些陈述来自AI模型的实际输出内容。
 {% if multimodal %}{{ _fragments.multimodal_input_rules }}{% endif %}
 
-**
-IMPORTANT: Please make sure to only return in valid and parseable JSON format, with the 'verdicts' key mapping to a list of JSON objects. Ensure all strings are closed appropriately. Repair any invalid JSON before you output it.
+**重要：请用中文回答，且仅返回合法可解析的JSON，顶层key为verdicts，值是JSON对象数组。保证所有字符串引号闭合，输出前修复JSON语法错误。**
 
-Expected JSON format:
+预期JSON格式：
 {
   "verdicts": [
     {
       "verdict": "yes"
     },
     {
-      "reason": <explanation_for_irrelevance>,
+      "reason": "无关原因说明",
       "verdict": "no"
     },
     {
-      "reason": <explanation_for_ambiguity>,
+      "reason": "模糊表述原因说明",
       "verdict": "idk"
     }
-  ]  
+  ]
 }
 
-Generate ONE verdict per statement - number of 'verdicts' MUST equal number of statements.
-'verdict' must be STRICTLY 'yes', 'no', or 'idk':
-- 'yes': statement is relevant to addressing the input
-- 'no': statement is irrelevant to the input  
-- 'idk': statement is ambiguous (not directly relevant but could be supporting information)
-Provide 'reason' ONLY for 'no' or 'idk' verdicts.
-**          
+每条陈述生成一条判定结果，verdicts数组长度**必须**与陈述列表长度完全一致。
+verdict**严格只能是** yes / no / idk：
+- yes：陈述和用户输入问题相关，有助于回答输入
+- no：陈述和用户输入问题无关
+- idk：陈述语义模糊，不直接回答问题，但可作为辅助参考信息
 
-Input:
+仅在 verdict 为 no 或 idk 的时候填写 reason。
+
+输入：
 {{ input }}
-
-Statements:
+陈述列表：
 {{ statements }}
-
-JSON:
+JSON：

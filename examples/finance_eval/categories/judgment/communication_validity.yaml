@@ -1,0 +1,16 @@
+# 任务：沟通有效性判定（judgment/communication_validity）
+# 与大类 judgment.yaml 合并
+
+metrics:
+  exact_format:
+    metric: pattern_match
+    name: "结果格式"
+    pattern: "^(有效沟通|无效沟通|待跟进)"
+    threshold: 1.0
+
+  boundary_cases:
+    metric: geval
+    name: "边界情形把握"
+    criteria: "评估对边界情形的判定是否得当：接通但当事人否认身份→待跟进而非有效；接通且确认身份但拒绝沟通→有效沟通（已达成身份核验目的）还是无效，需说明理由；无人接听/占线→无效沟通。输出判定应符合上述边界规则。"
+    evaluation_params: [input, actual_output, expected_output]
+    threshold: 0.8

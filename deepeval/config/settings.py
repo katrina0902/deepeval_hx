@@ -975,6 +975,15 @@ class Settings(BaseSettings):
         None,
         description="Disable DeepEval-enforced timeouts (per-attempt, per-task, gather). Provider SDK timeouts may still apply.",
     )
+    # 超时熔断：一次 evaluate 内超时（含取消）用例数达到该值时，取消所有
+    # 未完成任务并立即收尾（已完成的用例正常保存/上传），而非继续把剩余
+    # 用例全部跑完。None/0 = 不熔断（默认，保持官方行为）。
+    # 触发原因：judge API 限流/拥塞时用例大量超时，继续跑只会浪费时间且
+    # 大概率继续超时；及时止损保留已完成结果更划算。
+    DEEPEVAL_ABORT_ON_TIMEOUT: Optional[int] = Field(
+        None,
+        description="Abort the run (cancel pending cases, finalize normally with completed results) once this many test cases have timed out. None/0 = never abort.",
+    )
     # DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE
     # Per-attempt timeout (seconds) for provider calls used by the retry policy.
     # This is an OVERRIDE setting. The effective value you should rely on at runtime is
@@ -1083,7 +1092,7 @@ class Settings(BaseSettings):
             return 0.0 if usable <= 0 else (usable / attempts)
 
         # NEW: when neither override is set, derive from the default outer (180s)
-        default_outer = 180.0
+        default_outer = 300.0
         backoff = self._expected_backoff(attempts)
         safety = 1.0
         usable = max(0.0, default_outer - backoff - safety)

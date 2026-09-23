@@ -1,0 +1,15 @@
+# 任务：调解话术生成（generation/mediation_script）
+# 与大类 generation.yaml 合并
+
+metrics:
+  summary_quality:
+    metric: summarization
+    name: "要点覆盖质量"
+    threshold: 0.7
+
+  de_escalation:
+    metric: geval
+    name: "情绪安抚适配"
+    criteria: "判断生成的话术是否针对输入中当事人的情绪状态做了适配：当事人抵触/愤怒时应先安抚再陈述事由，态度中立时可直入主题。话术不得激化矛盾（如催促、定性指责）。"
+    evaluation_params: [input, actual_output]
+    threshold: 0.7

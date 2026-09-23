@@ -1,53 +1,49 @@
-Based on the given summary claims, which is a list of strings, generate a list of JSON objects to indicate whether EACH piece of info contradicts any facts in the original text. The JSON will have 2 fields: 'verdict' and 'reason'.
-
+根据给定的摘要断言（字符串列表），生成JSON对象列表，判断**每一条信息**是否与原文中的事实存在冲突。JSON包含两个字段：`verdict` 和 `reason`。
 {{ _fragments.multimodal_input_rules }}
 
-The 'verdict' key should STRICTLY be either 'yes', 'no', or 'idk', which states whether the given summary claim agrees with the original text. 
-Provide a 'reason' ONLY if the answer is 'no' OR 'idk'. 
-The provided summary claims is drawn from the summary. Try to provide a correction in the reason using the facts in the original text.
+`verdict` 的取值**严格只能是** `yes`、`no`、`idk`，代表该摘要断言是否和原文内容相符。
+仅当结果为 `no` 或者 `idk` 时，才需要填写`reason`理由。
 
-**
-IMPORTANT: Please make sure to only return in JSON format, with the 'verdicts' key as a list of JSON objects.
-Example Original Text: "Einstein won the Nobel Prize for his discovery of the photoelectric effect. Einstein won the Nobel Prize in 1968. Einstein is a German Scientist."
-Example Summary Claims: ["Barack Obama is a caucasian male.", "Zurich is a city in London", "Einstein won the Nobel Prize for the discovery of the photoelectric effect which may have contributed to his fame.", "Einstein won the Nobel Prize in 1969 for his discovery of the photoelectric effect.", "Einstein was a German chef."]
+摘要断言来自摘要文本。如果判定冲突，请在理由中依据原文事实给出修正意见。
 
-Example:
+**重要提示：仅返回JSON格式，顶层key为verdicts，值是JSON对象数组。**
+
+示例原文："张三因民间借贷纠纷申请诉前调解。张三申请调解金额5万元。张三居住于杭州市余杭区。"
+示例摘要断言：["李四是本次调解申请人。", "余杭区属于上海市。", "张三因民间借贷纠纷申请诉前调解，涉案金额5万元。", "张三申请调解的金额为8万元。", "张三是本次案件的被告。"]
+示例输出：
 {
   "verdicts": [
     {
       "verdict": "idk",
-      "reason": "The original text does not mention Barack Obama at all, let alone his racial features.
+      "reason": "原文完全没有提到李四，李四不是本次调解申请人。"
     },
     {
       "verdict": "idk",
-      "reason": "The original text does not mention Zurich, not does it mention Zurich being in London".
+      "reason": "原文仅提到张三居住地为余杭区，没有说明余杭区隶属于上海。"
     },
     {
       "verdict": "yes"
     },
     {
       "verdict": "no",
-      "reason": "The summary claims Einstein won the Nobel Prize in 1969, which is untrue as the original text states it is 1968 instead."
+      "reason": "摘要断言张三申请调解金额为8万元，与原文不符，原文调解金额为5万元。"
     },
     {
       "verdict": "no",
-      "reason": "The summary claims Einstein is a German chef, which is not correct as the original text states he was a German scientist instead."
-    },
-  ]  
+      "reason": "摘要断言张三是被告，不正确，原文说明张三是调解申请人（原告）。"
+    }
+  ]
 }
-===== END OF EXAMPLE ======
+===== 示例结束 =====
+`verdicts`数组长度**必须和摘要断言列表长度完全一致**。
+判定结果为`yes`时，**不需要填写reason理由**。
 
-The length of 'verdicts' SHOULD BE STRICTLY EQUAL to that of summary claims.
-You DON'T have to provide a reason if the answer is 'yes'.
-ONLY provide a 'no' answer if the summary DIRECTLY CONTRADICTS the claims. YOU SHOULD NEVER USE YOUR PRIOR KNOWLEDGE IN YOUR JUDGEMENT.
-Claims made using vague, suggestive, speculative language such as 'may have', 'possibility due to', does NOT count as a contradiction.
-Claims that is not backed up due to a lack of information/is not mentioned in the summary MUST be answered 'idk'.
-**
+只有当摘要内容**直接和原文矛盾**，才输出`no`。**禁止使用模型自身的外部知识进行判断**。
+使用模糊、推测性描述（例如“或许”、“有可能”）的断言，不算作事实冲突。
+原文没有相关信息、未提及的断言，必须判定为`idk`。
 
-Original Text:
+原文：
 {{ original_text }}
-
-Summary Claims:
+摘要断言：
 {{ summary_claims }}
-
-JSON:
+JSON：

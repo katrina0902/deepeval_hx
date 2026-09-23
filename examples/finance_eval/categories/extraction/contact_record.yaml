@@ -1,0 +1,19 @@
+# 任务：历史记录提取（extraction/contact_record）
+# 与大类 extraction.yaml 合并
+
+meta:
+  # Pydantic schema 在 examples/finance_eval/tasks.py 的
+  # EXTRA_PARAMS['extraction']['contact_record']['json_schema']
+
+metrics:
+  json_format:
+    metric: json_correctness
+    name: "JSON结构合规"
+    threshold: 0.8
+
+  actionability:
+    metric: geval
+    name: "后续动作可执行性"
+    criteria: "评估 next_action 字段是否给出了可执行的后续动作（如'三天后重拨'、'等待材料后回访'），动作应与联系结果 result 一致且具体到时间或触发条件。笼统的'继续跟进'视为不充分。"
+    evaluation_params: [input, actual_output]
+    threshold: 0.7

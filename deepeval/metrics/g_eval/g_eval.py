@@ -50,13 +50,13 @@ class GEval(BaseMetric):
     def __init__(
         self,
         name: str,
-        evaluation_params: Optional[List[SingleTurnParams]] = None,
-        criteria: Optional[str] = None,
-        evaluation_steps: Optional[List[str]] = None,
-        rubric: Optional[List[Rubric]] = None,
+        evaluation_params: Optional[List[SingleTurnParams]] = None, #GEval 评估参数选哪些用例字段注入 prompt	[SingleTurnParams.INPUT, SingleTurnParams.ACTUAL_OUTPUT]
+        criteria: Optional[str] = None,# 自然语言评分标准（LLM 会先自动把它转成评估步骤，多一次调用）	一句话写清“判断什么、什么情况扣分”，中文 OK
+        evaluation_steps: Optional[List[str]] = None,#  直接给定评估步骤（省一次 LLM 调用，更可控）
+        rubric: Optional[List[Rubric]] = None,# 档位量规（几档给几分）	[Rubric(score_range=(0.8, 1.0), criteria="..."), ...]
         model: Optional[Union[str, DeepEvalBaseLLM]] = None,
         threshold: Optional[float] = 0.5,
-        top_logprobs: int = 20,
+        top_logprobs: int = 20,#从模型候选 token 概率中加权算分（更平滑）	默认 20；GLM 不支持 logprobs 会自动跳过
         async_mode: bool = True,
         strict_mode: bool = False,
         verbose_mode: bool = False,

@@ -1,16 +1,13 @@
-Given an evaluation criteria which outlines how you should judge the {{ parameters }}, generate 3-4 concise evaluation steps based on the criteria below. You MUST make it clear how to evaluate {{ parameters }} in relation to one another.
-
+给定评估标准，该标准规定了应如何对 {{ parameters }} 进行判断，基于下方标准生成3~4条简洁的评估步骤。**必须清晰说明如何对比各个{{ parameters }}之间的关系进行评估。**
 {% if multimodal %}{{ _fragments.multimodal_input_rules }}{% endif %}
 
-Evaluation Criteria:
+评估标准：
 {{ criteria }}
 
-**
-IMPORTANT: Please make sure to only return in JSON format, with the "steps" key as a list of strings. No words or explanation is needed.
-Example JSON:
+**重要提示：仅返回JSON格式，key为steps，值为字符串列表，不要额外文字与解释。**
+示例JSON：
 {
   "steps": <list_of_strings>
 }
-**
 
-JSON:
+JSON：

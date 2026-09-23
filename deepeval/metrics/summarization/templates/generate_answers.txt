@@ -1,27 +1,24 @@
-Based on the list of close-ended 'yes' or 'no' questions, generate a JSON with key 'answers', which is a list of strings that determines whether the provided text contains sufficient information to answer EACH question.
-
+根据这一系列封闭式“是/否”问题，生成JSON，顶层key为`answers`，值为字符串列表，用来判断给定文本是否包含足够信息回答**每一个**问题。
 {{ _fragments.multimodal_input_rules }}
 
-Answers should STRICTLY be either 'yes' or 'no'.
-Answer 'no' if the provided text does not contain enough information to answer the question.
-**
-IMPORTANT: Please make sure to only return in JSON format, with the 'answers' key as a list of strings.
+回答**严格只能填写** `yes` 或者 `no`。
+如果给定文本没有足够信息回答该问题，则回答`no`。
 
-Example:
-Example Text: Mario and Luigi were best buds but since Luigi had a crush on Peach Mario ended up killing him.
-Example Questions: ["Are there enough information about Luigi and Mario?"]
-Example Answers:
+**重要：仅返回JSON格式，顶层key为answers，值为字符串数组。**
+
+示例：
+示例文本：张三与李四民间借贷纠纷进入诉前调解，李四同意调解，双方协商还款金额4万元。
+示例问题：["文本中是否包含张三李四调解案件的协商还款金额？"]
+示例输出：
 {
   "answers": ["yes"]
 }
 
-The length of 'answers' SHOULD BE STRICTLY EQUAL to that of questions.
-===== END OF EXAMPLE ======
+`answers`数组长度**必须和问题列表长度完全一致**。
+===== 示例结束 =====
 
-Text:
+文本：
 {{ text }}
-
-Questions:
+问题：
 {{ questions }}
-
-JSON:
+JSON：

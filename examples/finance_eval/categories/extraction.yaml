@@ -1,0 +1,51 @@
+# 大类：信息提取（所有提取类 AI 任务共享此配置）
+#
+# 结构：
+#   meta:
+#     test_case:   CSV 列 → LLMTestCase 字段的约定（哪些列必需/可选）
+#     evaluate:    evaluate() 调用参数（run_eval.py 读取）
+#   metrics:       大类通用指标（该大类下所有任务都会跑）
+#
+# 任务级配置在 categories/extraction/<任务>.yaml，其 metrics 会与这里的合并
+# （同名 key 以任务级为准，即任务可覆盖大类指标）。
+
+meta:
+  test_case:
+    # CSV 列约定：data/extraction/<任务>.csv
+    required: [input, actual_output]        # input=案件材料/记录，actual_output=提取结果
+    optional: [expected_output, context, retrieval_context, name, tags]
+  evaluate:
+    identifier_prefix: "extraction"         # 报告标识前缀
+    async:                                   # 并发控制（豆包/GLM 限流或超时时调低）
+      max_concurrent: 5                      # 最大并发数（默认 20）
+      throttle_value: 2                      # 每次任务开始前等待秒数（默认 0）
+    display:
+      print_results: true                  # false=完全不打印结果表（进度条仍在）
+      display_option: failing              # all=全部 / failing=只看失败 / passing=只看通过
+      truncate_passing_cases: true         # 截断通过用例的 reason 展示（控制台更短）
+    report:
+      # 每个指标在 MD/HTML 报告中展示的参数（该指标实际送评的视图，默认收起；
+      # 无内容不展示）。不配置 = input/actual_output/retrieval_context 全展示；
+      # [] = 全部关闭；子集如 [input, actual_output] = 只展示所列参数
+      view_params: [input, actual_output, retrieval_context]
+    error:
+      ignore_errors: true
+      skip_on_missing_params: true
+
+# ---- 大类通用指标：提取结果的共性要求 ----
+metrics:
+  faithfulness:
+    metric: faithfulness
+    name: "事实忠实度"
+    evaluation_params: [input, actual_output, retrieval_context]
+    threshold: 0.8
+
+  relevancy:
+    metric: answer_relevancy
+    name: "回答相关性"
+    threshold: 0.7
+
+  json_format:
+    metric: json_correctness
+    name: "JSON结构合规"
+    threshold: 0.8

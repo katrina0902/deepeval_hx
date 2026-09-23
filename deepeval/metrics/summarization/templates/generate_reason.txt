@@ -1,24 +1,21 @@
-You will be given the following: 1) information in the summary contradicting the original text, 2) extra information in the summary not mentioned in the original text, 3) [Optional] questions cannot be answered by the summary. Your task is to explain the quality of this summarization task.
-Given the summarization score, which is a 0-1 score indicating how good the summary is to the original text (higher the better), CONCISELY summarize the provided information to justify the score.  
+你将获得以下信息：1）摘要中与原文相矛盾的信息，2）摘要里存在但原文未提及的额外信息，3）【可选】无法通过摘要回答的问题。你的任务是说明本次摘要任务的质量。
 
+给定摘要得分（0~1分，分值越高代表摘要相对原文质量越好），**简洁地汇总上述信息，对该分数给出理由说明。**
 {{ _fragments.multimodal_input_rules }}
 
-** 
-IMPORTANT: Please make sure to only return in JSON format, with the 'reason' key providing the reason.
-Example JSON:
+**重要：仅返回JSON格式，key为reason，填入理由。**
+示例JSON：
 {
-  "reason": "The score is <summarization_score> because <your_reason>."
+  "reason": "该分数为<summarization_score>，因为<你的理由>。"
 }
 
-For 'None' values in contradictions, extra information, or questions that the original text can answer but not the summary, DON'T mention anything and instead offer some praise.
-Be sure in your reason, as if you know what the summary and original text is.
-**
+对于矛盾信息、额外信息、原文可回答但摘要无法回答的问题的值为`None`，**不要提及该项内容，改为给出正面评价。**
+理由描述要贴合摘要和原文的实际情况。
 
-Summarization Score:
+摘要得分：
 {{ score }}
-
-Contradicting Information in the original text:
+和原文存在矛盾的信息：
 {{ contradictions }}
-
-Extra Information not mentioned in the original text:
+原文未提及的额外信息：
 {{ redundancies }}
+JSON：

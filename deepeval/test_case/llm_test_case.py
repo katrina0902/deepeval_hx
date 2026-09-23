@@ -351,68 +351,68 @@ class RetrievedContextData(BaseModel):
 class LLMTestCase(BaseModel):
     model_config = make_model_config(extra="ignore")
 
-    input: str
+    input: str   #用户输入
     actual_output: Optional[str] = Field(
         default=None,
         serialization_alias="actualOutput",
         validation_alias=AliasChoices("actualOutput", "actual_output"),
-    )
+    ) # 被评估的实际输出
     expected_output: Optional[str] = Field(
         default=None,
         serialization_alias="expectedOutput",
         validation_alias=AliasChoices("expectedOutput", "expected_output"),
-    )
+    ) # 理想答案
     context: Optional[List[str]] = Field(
         default=None, serialization_alias="context"
-    )
+    ) # 背景事实
     retrieval_context: Optional[List[Union[str, RetrievedContextData]]] = Field(
         default=None,
         serialization_alias="retrievalContext",
         validation_alias=AliasChoices("retrievalContext", "retrieval_context"),
-    )
+    ) # RAG检索结果; 用于FaithfulnessMetric
     metadata: Optional[Dict] = Field(
         default=None,
         validation_alias=AliasChoices(
             "metadata", "additionalMetadata", "additional_metadata"
         ),
-    )
+    ) # 附加元数据
     tools_called: Optional[List[ToolCall]] = Field(
         default=None,
         serialization_alias="toolsCalled",
         validation_alias=AliasChoices("toolsCalled", "tools_called"),
-    )
+    ) # 实际被调用的工具
     comments: Optional[str] = Field(
         default=None, serialization_alias="comments"
-    )
+    ) # 备注
     expected_tools: Optional[List[ToolCall]] = Field(
         default=None,
         serialization_alias="expectedTools",
         validation_alias=AliasChoices("expectedTools", "expected_tools"),
-    )
+    ) # 理想被调用的工具
     token_cost: Optional[float] = Field(
         default=None,
         serialization_alias="tokenCost",
         validation_alias=AliasChoices("tokenCost", "token_cost"),
-    )
+    ) # 本次调用成本
     input_token_count: Optional[int] = Field(
         default=None,
         serialization_alias="inputTokenCount",
         validation_alias=AliasChoices("inputTokenCount", "input_token_count"),
-    )
+    ) # 输入token数
     output_token_count: Optional[int] = Field(
         default=None,
         serialization_alias="outputTokenCount",
         validation_alias=AliasChoices("outputTokenCount", "output_token_count"),
-    )
+    ) # 输出token数
     completion_time: Optional[float] = Field(
         default=None,
         serialization_alias="completionTime",
         validation_alias=AliasChoices("completionTime", "completion_time"),
-    )
-    flaky: bool = Field(default=False)
-    multimodal: bool = Field(default=False)
-    name: Optional[str] = Field(default=None)
-    tags: Optional[List[str]] = Field(default=None)
+    ) # 耗时s
+    flaky: bool = Field(default=False) #允许波动（失败只警告不堵塞）
+    multimodal: bool = Field(default=False) # 是否多模态
+    name: Optional[str] = Field(default=None) # 测试用例名称
+    tags: Optional[List[str]] = Field(default=None) # 测试用例标签
     # MCP
     mcp_servers: Optional[List[MCPServer]] = Field(default=None)
     mcp_tools_called: Optional[List[MCPToolCall]] = Field(

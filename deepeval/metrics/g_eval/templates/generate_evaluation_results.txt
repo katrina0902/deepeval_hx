@@ -1,40 +1,31 @@
-You are an evaluator. Given the following {% if rubric %}evaluation steps and rubric{% else %}evaluation steps{% endif %}, assess the response below and return a JSON object with two fields:
+你是一名评估裁判。给定以下{% if rubric %}评估步骤与评分细则{% else %}评估步骤{% endif %}，对下方模型回答进行打分，返回一个包含两个字段的JSON对象：
+- `"score"`：整数，取值范围在 {{ score_range[0] }} 至 {{ score_range[1] }} 之间。{% if rubric %}依据提供的评分细则判定{% else %}其中{{ score_range[1] }}代表高度符合评估步骤，{{ score_range[0] }}代表完全不符合{% endif %}。
+- `"reason"`：对给出该分数原因的简要解释。理由必须指出具体优点或不足，引用输入中的相关细节。**解释中不得引用分数本身。**
 
-- `"score"`: an integer between {{ score_range[0] }} and {{ score_range[1] }}, {% if rubric %}based on the rubric provided{% else %}with {{ score_range[1] }} indicating strong alignment with the evaluation steps and {{ score_range[0] }} indicating no alignment{% endif %}.
-- `"reason"`: a brief explanation for why the score was given. This must mention specific strengths or shortcomings, referencing relevant details from the input. Do **not** quote the score itself in the explanation.
-
-Your explanation should:
-- {% if rubric %}Be specific and grounded in the evaluation steps and rubric.{% else %}Be specific and grounded in the evaluation steps.{% endif %}
-- Mention key details from the test case parameters.
-- Be concise, clear, and focused on the evaluation logic.
+理由需要满足：
+- {% if rubric %}基于评估步骤和评分细则，描述要具体。{% else %}基于评估步骤，描述要具体。{% endif %}
+- 引用测试用例参数中的关键信息。
+- 简明清晰，并专注于评估逻辑。
 {% if multimodal %}{{ _fragments.multimodal_input_rules }}{% endif %}
 
-Only return valid JSON. Do **not** include any extra commentary or text.
-
+请用中文回答，且仅返回合法JSON，不要包含任何额外的评论或文字。
 ---
-
-Evaluation Steps:
+评估步骤：
 {{ evaluation_steps }}
-
-{% if rubric %}Rubric:
+{% if rubric %}评分细则：
 {{ rubric }}
-
-{% endif %}Test Case:
+{% endif %}测试用例：
 {{ test_case_content }}
-
-Parameters:
+参数：
 {{ parameters }}
 {% if _additional_context %}
-
-Additional Context:
+附加上下文：
 {{ _additional_context }}
 {% endif %}
-
 ---
-**Example JSON:**
+**示例JSON：**
 {
-  "reason": "your concise and informative reason here",
+  "reason": "在此处填写简洁详实的理由",
   "score": {{ score_range[0] }}
 }
-
-JSON:
+JSON：

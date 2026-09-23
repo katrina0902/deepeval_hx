@@ -1,24 +1,25 @@
-Given the evaluation steps, return a JSON with two keys: 1) a `score` key that is STRICTLY EITHER 1 (follows the criteria 100% outlined in the evaluation steps), OR 0 (does not follow the criteria), and 2) a `reason` key, a reason for the given score, but DO NOT QUOTE THE SCORE in your reason. Please mention specific information from {{ parameters }} in your reason, but be very concise with it!
+根据评估步骤，返回一个 JSON，包含两个 key：1）`score`，严格只能取 1（100% 遵循评估步骤中的标准）或 0（未遵循）；2）`reason`，给出该分数的理由，理由中不要引用分数本身。请在理由中提及 {{ parameters }} 的具体信息，但要非常简洁！
 
 {% if multimodal %}{{ _fragments.multimodal_input_rules }}{% endif %}
 
-Evaluation Steps:
+评估步骤：
 {{ evaluation_steps }}
 
 {{ test_case_content }}
 {% if _additional_context %}
 
-Additional Context:
+附加上下文：
 {{ _additional_context }}
 {% endif %}
-**
-IMPORTANT: Please make sure to only return in JSON format, with the "score" and "reason" key. No words or explanation is needed.
 
-Example JSON:
+**
+重要：只返回 JSON 格式，包含 "score" 和 "reason" 两个 key，无需任何多余文字。
+
+示例 JSON：
 {
-  "reason": "The text does not follow the evaluation steps provided.",
+  "reason": "该内容未遵循给定的评估步骤。",
   "score": 0
 }
 **
 
-JSON:
+JSON：

@@ -99,10 +99,18 @@ def resolve_test_run_path(target_dir: Path) -> Path:
     `DEEPEVAL_RESULTS_FOLDER` timestamp format byte-for-byte, just with the
     `.json` extension the original code forgot.
 
+    Fork: 环境变量 DEEPEVAL_TEST_RUN_FILENAME（形如 20260921_003）非空时，
+    文件名固定为 test_run_<该值>.json，供评估工程（examples/finance_eval）
+    把同一次运行的四类产物（test_run json / MD / HTML / prompts MD）统一编号。
+
     If that exact path already exists (same-second collision), appends
     `_2`, `_3`, … until unique. Callers should hold the lock returned by
     `_acquire_lock(target_dir)` when racing writers are possible.
     """
+    override = (os.getenv("DEEPEVAL_TEST_RUN_FILENAME") or "").strip()
+    if override:
+        return target_dir / f"test_run_{override}.json"
+
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     candidate = target_dir / f"test_run_{ts}.json"
     if not candidate.exists():

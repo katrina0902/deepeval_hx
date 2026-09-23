@@ -1,0 +1,29 @@
+# 大类：生成（所有生成类 AI 任务共享此配置）
+# meta 含义与结构同 extraction.yaml
+
+meta:
+  test_case:
+    required: [input, actual_output]        # input=案件材料/上下文，actual_output=生成文本
+    optional: [expected_output, context, retrieval_context, name, tags]
+  evaluate:
+    identifier_prefix: "generation"
+    display:
+      print_results: true
+      truncate_passing_cases: false
+    error:
+      ignore_errors: true
+      skip_on_missing_params: true
+
+# ---- 大类通用指标：生成文本的共性要求 ----
+metrics:
+  relevancy:
+    metric: answer_relevancy
+    name: "回答相关性"
+    threshold: 0.7
+
+  tone_compliance:
+    metric: geval
+    name: "话术合规性"
+    criteria: "判断生成内容是否符合调解话术规范：语气中立专业、不使用威胁或施压表述、不承诺调解范围外的事项（如减免额度）、不泄露非必要个人信息。"
+    evaluation_params: [input, actual_output]
+    threshold: 0.8

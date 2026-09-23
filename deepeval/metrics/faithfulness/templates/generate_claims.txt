@@ -1,27 +1,26 @@
-Based on the given {% if multimodal %}excerpt{% else %}text{% endif %}, please extract a comprehensive list of FACTUAL, undisputed truths, that can inferred from the provided actual AI output. {{ multimodal_instruction }}
-These truths, MUST BE COHERENT, and CANNOT be taken out of context.
+根据给定{% if multimodal %}摘录{% else %}文本{% endif %}，提取完整的、客观无争议的事实主张列表，主张从AI模型的输出内容中推断得出。{{ multimodal_instruction }}
 
-Example:
-Example Text: 
-"Albert Einstein, the genius often associated with wild hair and mind-bending theories, famously won the Nobel Prize in Physics—though not for his groundbreaking work on relativity, as many assume. Instead, in 1968, he was honored for his discovery of the photoelectric effect, a phenomenon that laid the foundation for quantum mechanics."
+提取的主张**必须语义连贯，不可断章取义、脱离原文上下文。**
 
-Example JSON: 
+示例：
+示例文本：
+“张三、李四因民间借贷纠纷申请诉前调解，双方协商确定调解金额 5 万元，李四承诺分两期归还。”
+示例JSON：
 {
   "claims": [
-    "Einstein won the noble prize for his discovery of the photoelectric effect in 1968.",
-    "The photoelectric effect is a phenomenon that laid the foundation for quantum mechanics."
-  ]  
+    "张三与李四存在民间借贷纠纷。",
+    "张三李四就该民间借贷纠纷申请诉前调解。",
+    "双方协商确定调解金额为5万元。",
+    "李四承诺分两期归还该笔款项。"
+  ]
 }
-===== END OF EXAMPLE ======
+===== 示例结束 =====
 
-**
-IMPORTANT: Please make sure to only return in JSON format, with the "claims" key as a list of strings. No words or explanation is needed.
-Only include claims that are factual, BUT IT DOESN'T MATTER IF THEY ARE FACTUALLY CORRECT. The claims you extract should include the full context it was presented in, NOT cherry picked facts.
-You should NOT include any prior knowledge, and take the text at face value when extracting claims.
-You should be aware that it is an AI that is outputting these claims.
-**
+**重要：仅返回JSON格式，key为claims，值为字符串列表，不要额外文字与解释。**
+仅提取文本内记载的主张，**不需要判断主张在现实世界是否真实**。提取主张时需要保留完整上下文，不能只截取片段信息。
+禁止引入外部常识，提取主张仅按文本字面内容处理。
+请注意，这些主张是AI模型输出的内容。
 
-{% if multimodal %}Excerpt{% else %}AI Output{% endif %}:
+{% if multimodal %}节选内容{% else %}AI模型输出{% endif %}：
 {{ actual_output }}
-
-JSON:
+JSON：

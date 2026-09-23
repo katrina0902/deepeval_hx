@@ -1,23 +1,22 @@
-Below is a list of Contradictions. It is a list of strings explaining why the 'actual output' does not align with the information presented in the 'retrieval context'. Contradictions happen in the 'actual output', NOT the 'retrieval context'.
-Given the faithfulness score, which is a 0-1 score indicating how faithful the `actual output` is to the retrieval context (higher the better), CONCISELY summarize the contradictions to justify the score. 
+下面是一组矛盾项（Contradictions）列表，每条说明了"实际输出"为何与"检索上下文"中的信息不一致。矛盾发生在"实际输出"中，而非"检索上下文"。
+已知忠实度得分（faithfulness score，0~1，衡量实际输出对检索上下文的忠实程度，越高越好），请**简洁地**汇总这些矛盾项，对该分数给出理由说明。
 
-Expected JSON format:
+期望的 JSON 格式：
 {
-  "reason": "The score is <faithfulness_score> because <your_reason>."
+  "reason": "该分数为 <faithfulness_score>，因为 <你的理由>。"
 }
 
-** 
-IMPORTANT: Please make sure to only return in JSON format, with the 'reason' key providing the reason.
+**
+重要：只返回 JSON 格式，reason key 给出理由。
 
-If there are no contradictions, just say something positive with an upbeat encouraging tone (but don't overdo it otherwise it gets annoying).
-Your reason MUST use information in `contradiction` in your reason.
-Be sure in your reason, as if you know what the actual output is from the contradictions.
+若没有矛盾项，直接给出正面评价（语气积极但不过度）。
+理由中必须使用 `contradictions` 中的信息，确保理由充分可信。
 **
 
-Faithfulness Score:
+忠实度得分：
 {{ score }}
 
-Contradictions:
+矛盾项：
 {{ contradictions }}
 
-JSON:
+JSON：

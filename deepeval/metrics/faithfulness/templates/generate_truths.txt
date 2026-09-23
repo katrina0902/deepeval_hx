@@ -1,24 +1,26 @@
-Based on the given {% if multimodal %}excerpt (text and images){% else %}text{% endif %}, please generate a comprehensive list of{{ limit }}, that can inferred from the provided {% if multimodal %}excerpt{% else %}text{% endif %}.{{ multimodal_instruction }}
-These truths, MUST BE COHERENT. They must NOT be taken out of context.
+根据给定{% if multimodal %}摘录（文本与图片）{% else %}文本{% endif %}，生成{{ limit }}条可从该{% if multimodal %}摘录{% else %}文本{% endif %}推断出的事实陈述。{{ multimodal_instruction }}
 
-Example:
-Example Text: 
-"Albert Einstein, the genius often associated with wild hair and mind-bending theories, famously won the Nobel Prize in Physics—though not for his groundbreaking work on relativity, as many assume. Instead, in 1968, he was honored for his discovery of the photoelectric effect, a phenomenon that laid the foundation for quantum mechanics."
+这些事实陈述**必须语义连贯，不能断章取义、脱离原文上下文。**
 
-Example JSON: 
+示例：
+示例文本：
+“张三与李四因民间借贷纠纷申请诉前调解，申请调解金额 5 万元，双方协商达成一致，李四分两期偿还欠款。”
+示例JSON：
 {
   "truths": [
-    "Einstein won the noble prize for his discovery of the photoelectric effect in 1968.",
-    "The photoelectric effect is a phenomenon that laid the foundation for quantum mechanics."
-  ]  
+    "张三和李四的案件属于民间借贷纠纷。",
+    "张三就该民间借贷案件申请诉前调解。",
+    "案件申请调解金额为5万元。",
+    "张三李四双方协商达成调解方案。",
+    "李四将分两期偿还欠款。"
+  ]
 }
-===== END OF EXAMPLE ======
-**
-IMPORTANT: Please make sure to only return in JSON format, with the "truths" key as a list of strings. No words or explanation is needed.
-Only include truths that are factual, BUT IT DOESN'T MATTER IF THEY ARE FACTUALLY CORRECT.
-**
 
-{% if multimodal %}Excerpt{% else %}Text{% endif %}:
+===== 示例结束 =====
+
+**重要提示：请确保仅返回 JSON 格式，key为truths，值为字符串列表，不要额外文字与解释。**
+只提取原文内记载的事实陈述，**无需判断该陈述本身在现实世界是否真实，只忠实原文内容即可。**
+
+{% if multimodal %}节选内容{% else %}文本{% endif %}：
 {{ retrieval_context }}
-
-JSON:
+JSON：

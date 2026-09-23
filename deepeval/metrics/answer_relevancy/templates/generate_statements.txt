@@ -1,27 +1,22 @@
-Given the text, breakdown and generate a list of statements presented. Ambiguous statements and single words can be considered as statements, but only if outside of a coherent statement.
+给定文本，拆解并提取其中包含的陈述语句列表。模糊表述、单个词语，如果不属于完整连贯语句内部，也可单独作为一条陈述。
 
-Example:
-Example text: 
-Our new laptop model features a high-resolution Retina display for crystal-clear visuals. It also includes a fast-charging battery, giving you up to 12 hours of usage on a single charge. For security, we’ve added fingerprint authentication and an encrypted SSD. Plus, every purchase comes with a one-year warranty and 24/7 customer support.
-
+示例：
+示例文本：
+我们新款笔记本搭载高分辨率视网膜显示屏，画面清晰。配备快充电池，单次充电最长可使用12小时。安全方面增加指纹认证与加密固态硬盘。此外，每次购买附赠一年质保以及7×24小时客服支持。
 {% if multimodal %}{{ _fragments.multimodal_input_rules }}{% endif %}
-
 {
   "statements": [
-    "The new laptop model has a high-resolution Retina display.",
-    "It includes a fast-charging battery with up to 12 hours of usage.",
-    "Security features include fingerprint authentication and an encrypted SSD.",
-    "Every purchase comes with a one-year warranty.",
-    "24/7 customer support is included."
+    "张三与李四属于民间借贷纠纷。",
+    "案件申请调解金额为5万元。",
+    "双方达成调解协议。",
+    "李四将分两期进行还款。"
   ]
 }
-===== END OF EXAMPLE ======
 
-**
-IMPORTANT: Please make sure to only return in valid and parseable JSON format, with the "statements" key mapping to a list of strings. No words or explanation are needed. Ensure all strings are closed appropriately. Repair any invalid JSON before you output it.
-**
+===== 示例结束 =====
 
-Text:
+**重要提示：请确保仅返回有效且可解析的合法 JSON 格式，key为statements，值为字符串数组，不要额外文字解释。确保所有字符串都正确闭合。在输出前修复任何无效的 JSON。**
+
+文本：
 {{ actual_output }}
-
-JSON:
+JSON：
