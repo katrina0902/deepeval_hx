@@ -258,6 +258,13 @@ def run_task(task: str, limit: int = None, resume: bool = False, offset: int = N
     file_type = ev.get("report", {}).get("file_type", None)
     # 每个指标在报告展示的参数（该指标实际送评的视图）；None = 默认三参数全展示
     vp_cfg = ev.get("report", {}).get("view_params", None)
+    # 云上传开关：evaluate(sync_to_cloud=...)。YAML 键 sync_to_cloud
+    # （兼容旧键 upload_cloud）。false=只存本地；true=跟随全局（有 key 就传）
+    sync_to_cloud = ev.get("report", {}).get("sync_to_cloud")
+    if sync_to_cloud is None:
+        sync_to_cloud = ev.get("report", {}).get("upload_cloud")
+    if sync_to_cloud is None:
+        sync_to_cloud = True
 
     from deepeval.test_run.test_run import TestRunResultDisplay
 
@@ -303,6 +310,7 @@ def run_task(task: str, limit: int = None, resume: bool = False, offset: int = N
         metrics=metrics,
         identifier=f"{prefix}-{task.split('/')[1]}",
         hyperparameters=hyper_params or None,
+        sync_to_cloud=sync_to_cloud,
         async_config=AsyncConfig(
             run_async=asy.get("run_async", True),
             throttle_value=asy.get("throttle_value", 0),

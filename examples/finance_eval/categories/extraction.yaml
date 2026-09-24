@@ -24,6 +24,9 @@ meta:
       display_option: failing              # all=全部 / failing=只看失败 / passing=只看通过
       truncate_passing_cases: true         # 截断通过用例的 reason 展示（控制台更短）
     report:
+      # 是否上传 Confident AI 云端：false=只存本地 .deepeval_results；
+      # true/不配置=跟随全局（配置了 CONFIDENT_API_KEY 就上传）
+      sync_to_cloud: false
       # 每个指标在 MD/HTML 报告中展示的参数（该指标实际送评的视图，默认收起；
       # 无内容不展示）。不配置 = input/actual_output/retrieval_context 全展示；
       # [] = 全部关闭；子集如 [input, actual_output] = 只展示所列参数
@@ -34,12 +37,18 @@ meta:
 
 # ---- 大类通用指标：提取结果的共性要求 ----
 metrics:
+
+# 只看是否和检索上下文冲突，**不看回答是否贴合用户提问**;
+# 原理：Judge 把模型输出拆成多条独立事实陈述；逐条判断**这条陈述是否能被 retrieval_context 支撑**
+# 公式：`忠实度 = 可被上下文支撑的事实条数 / 总事实条数` → 映射 0~1
   faithfulness:
     metric: faithfulness
-    name: "事实忠实度"
+    name: "事实忠实度（幻觉检测）"
     evaluation_params: [input, actual_output, retrieval_context]
     threshold: 0.8
 
+# 不检查事实真假，只管和用户问题是否相关。
+# 原理：Judge 判断模型输出是否**针对用户输入作答**，有没有答非所问、跑题。
   relevancy:
     metric: answer_relevancy
     name: "回答相关性"

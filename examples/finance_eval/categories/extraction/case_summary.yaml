@@ -57,6 +57,10 @@ metrics:
   # output_field:     ai_response_content JSON 内哪个子字段作为 actual_output（支持点路径）
   # 未配置则透传原始 input / actual_output
 
+# GEval 是论文原版 G-Eval 实现，**两步打分**：
+# 1. Judge 先根据你写的`criteria`，生成一套分步评估标准（CoT 评估步骤）
+# 2. 再用这套步骤对 case 打分（原始 1~5 分），利用 token 概率加权，归一化成 0~1；同时输出 reason 理由DeepEval。（logprob加权微调(非 strict模式,utils.py:337-383):取judge输出 score那个token的top候选概率分布，算期望分）
+
   commitment_chain:
     metric: geval
     name: "方案承诺演变履约链完整度"
