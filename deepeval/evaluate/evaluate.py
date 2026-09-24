@@ -193,6 +193,9 @@ def evaluate(
     identifier: Optional[str] = None,  # 本次运行名称（报告标题）
     official: bool = False,  # 标记为 Confident AI 基线
     _skip_reset: bool = False,  # 是否跳过重置（本地评估时）
+    # Fork: 是否把本次评估结果上传 Confident AI 云端。
+    # True = 有 CONFIDENT_API_KEY 就上传；False = 只存本地 .deepeval_results
+    sync_to_cloud: bool = False,
     # Configs
     async_config: Optional[AsyncConfig] = AsyncConfig(),
     display_config: Optional[DisplayConfig] = DisplayConfig(),
@@ -299,6 +302,12 @@ def evaluate(
             )
 
         global_test_run_manager.save_test_run(TEMP_FILE_PATH)
+
+        # Fork: sync_to_cloud=False 时禁止 wrap_up 阶段上传 Confident AI。
+        # 放在执行之后（e2e 内 create_test_run 会重置 disable_request，若在
+        # 执行前设置会被覆盖），且仅在显式关闭时置 True，不干扰其他来源。
+        if sync_to_cloud is False:
+            global_test_run_manager.disable_request = True
 
         # In CLI mode (`deepeval test run`), the CLI owns finalization and will
         # call `wrap_up_test_run()` once after pytest finishes. Finalizing here

@@ -80,7 +80,7 @@ TASKS = {
         "criteria": os.path.join(_EVALS_DIR, "categories", "extraction", "case_summary.yaml"),
         # 默认采样条数：每次运行最多取前 N 条；留空/不配 → 取全部
         # （命令行 --limit N 可覆盖该默认值）
-        "limit": 1000,
+        "limit": 10,
         # 外部导出 CSV 列名 → LLMTestCase 字段/元数据的映射
         "columns": {
             "ai_task": "案情概览",            # 只取该 ai_task 的行
