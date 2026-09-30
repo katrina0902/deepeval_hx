@@ -25,7 +25,27 @@ def _mk(model_env, model_default, base_env, base_default, key_env, label):
 # ---------------- 可用 judge 模型注册 ----------------
 
 _MODELS = {
-    # 豆包（火山方舟 ark API，OpenAI 兼容；model 填推理接入点 ID）
+    # DeepSeek-V4-Flash 正式版（火山方舟 ark API，OpenAI 兼容）
+    # 默认 judge：.env.local 未配 JUDGE_PROVIDER 时走这个
+    "deepseek_v4_flash": lambda: _mk(
+        "DEEPSEEK_MODEL_ID", "deepseek-v4-flash-ga-260731",
+        "DEEPSEEK_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3",
+        "DEEPSEEK_API_KEY", "deepseek",
+    ),
+    # DeepSeek-V4-Pro 正式版（同 key，旗舰档，打分一致性预期最好）
+    "deepseek_v4_pro": lambda: _mk(
+        "DEEPSEEK_PRO_MODEL_ID", "deepseek-v4-pro-ga-260813",
+        "DEEPSEEK_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3",
+        "DEEPSEEK_API_KEY", "deepseek",
+    ),
+    # 豆包 Seed 2.1 Pro（火山方舟 ark API，OpenAI 兼容）
+    # 也可用直连模型 ID：doubao-seed-2-1-pro-260915
+    "doubao_seed_2_1_pro": lambda: _mk(
+        "DOUBAO_S21_MODEL_ID", "doubao-seed-2-1-pro-260915",
+        "DOUBAO_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3",
+        "DOUBAO_API_KEY", "doubao",
+    ),
+    # 豆包 Seed 1.6（火山方舟 ark API；model 填推理接入点 ID）
     # hz_doubao_seed_1.6 接入点：ep-20250617155424-hjcnp，key 待填 DOUBAO_API_KEY
     "hz_doubao_seed_1.6": lambda: _mk(
         "DOUBAO_MODEL_ID", "ep-20250617155424-hjcnp",
@@ -40,6 +60,8 @@ _MODELS = {
     ),
 }
 
-# 当前 judge 模型：.env.local 的 JUDGE_PROVIDER 选择（hz_doubao_seed_1.6 / glm）
-PROVIDER = os.getenv("JUDGE_PROVIDER", "hz_doubao_seed_1.6")
+# 当前 judge 模型：.env.local 的 JUDGE_PROVIDER 选择
+# （deepseek_v4_flash / deepseek_v4_pro /
+#  doubao_seed_2_1_pro / hz_doubao_seed_1.6 / glm）
+PROVIDER = os.getenv("JUDGE_PROVIDER", "deepseek_v4_flash")
 JUDGE_MODEL = _MODELS[PROVIDER]()

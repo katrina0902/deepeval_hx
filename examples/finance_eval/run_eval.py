@@ -40,6 +40,7 @@ from deepeval.test_case import LLMTestCase
 
 from eval_config import JUDGE_MODEL, PROVIDER
 from metrics_loader import (
+    _PARAM_MAP,
     attach_material_fields,
     build_metrics,
     load_category_spec,
@@ -496,6 +497,133 @@ def _raw_template(metric_dir: str, name: str) -> str:
         return f.read().strip()
 
 
+# ---------- 模板渲染：配置类占位符填实际值，用例/中间产物保留原样 ----------
+
+# 模板类名（templates.json 的顶层 key）：resolve_template 按类名取模板
+_TEMPLATE_CLASSES = {
+    "geval": "GEval",
+    "summarization": "SummarizationMetric",
+    "faithfulness": "FaithfulnessMetric",
+    "answer_relevancy": "AnswerRelevancyMetric",
+    "json_correctness": "JsonCorrectnessMetric",
+}
+
+# 各指标类型构造时与 YAML 配置相关的默认值（与 deepeval 指标 __init__ 默认一致）
+_METRIC_CFG_DEFAULTS = {
+    "summarization": {"n": 5},
+}
+
+
+def _truths_limit_phrase(kind: str, cfg: dict) -> str:
+    """{{ limit }} 占位符的实际值（与 faithfulness.py 同口径的英文短语）。"""
+    limit = cfg.get("truths_extraction_limit")
+    if limit is None:
+        return " FACTUAL, undisputed truths"
+    if limit == 1:
+        return " the single most important FACTUAL, undisputed truth"
+    return f" the {limit} most important FACTUAL, undisputed truths per document"
+
+
+def _render_template(kind: str, method: str, cfg: dict) -> str:
+    """按运行时同款 Jinja2 渲染提示词模板。
+
+    配置/常量类占位符（criteria/parameters/limit/n/score_range/
+    multimodal_instruction/_fragments/条件块）渲染为实际值；
+    用例字段与运行时中间产物（input/actual_output/retrieval_context/
+    test_case_content/score/claims...）以 <占位符> 形式保留原样。
+    """
+    from jinja2 import Environment
+    from deepeval.templates import resolve_template
+
+    # 判定/步骤类模板需要的关键字（按指标类型与模板名准备）
+    kwargs = {"multimodal": False}
+    if kind == "geval":
+        params = cfg.get("evaluation_params") or ["input", "actual_output"]
+        # 与 construct_g_eval_params_string 同构："Input and Actual Output"
+        names = [
+            {"input": "Input", "actual_output": "Actual Output",
+             "expected_output": "Expected Output", "context": "Context",
+             "retrieval_context": "Retrieval Context"}.get(p, p)
+            for p in params
+        ]
+        if len(names) == 1:
+            kwargs["parameters"] = names[0]
+        elif len(names) == 2:
+            kwargs["parameters"] = " and ".join(names)
+        else:
+            kwargs["parameters"] = ", ".join(names[:-1]) + ", and " + names[-1]
+        kwargs["criteria"] = cfg.get("criteria", "{{ criteria }}")
+        # evaluation_steps：YAML 配了用配置值（编号格式化），否则是运行时
+        # LLM 生成物 → 保留占位符（配了就不会走 generate_evaluation_steps 模板）
+        kwargs["evaluation_steps"] = "{{ evaluation_steps }}"
+        kwargs["rubric"] = None
+        kwargs["score_range"] = (0, 10)
+        kwargs["test_case_content"] = "{{ test_case_content }}"
+        kwargs["_additional_context"] = None
+    elif kind == "faithfulness":
+        if method == "generate_truths":
+            kwargs["retrieval_context"] = "{{ retrieval_context }}"
+            kwargs["limit"] = _truths_limit_phrase(kind, cfg)
+            kwargs["multimodal_instruction"] = ""
+        elif method == "generate_claims":
+            kwargs["actual_output"] = "{{ actual_output }}"
+            kwargs["multimodal_instruction"] = ""
+        elif method == "generate_verdicts":
+            # 运行时此处传的是 truths（LLM 产物），不是原始素材 → 保留
+            kwargs["retrieval_context"] = "{{ truths }}"
+            kwargs["claims"] = "{{ claims }}"
+        elif method == "generate_reason":
+            kwargs["score"] = "{{ score }}"
+            kwargs["contradictions"] = "{{ contradictions }}"
+    elif kind == "answer_relevancy":
+        if method == "generate_statements":
+            kwargs["actual_output"] = "{{ actual_output }}"
+        elif method == "generate_verdicts":
+            kwargs["input"] = "{{ input }}"
+            kwargs["statements"] = "{{ statements }}"
+        elif method == "generate_reason":
+            kwargs["score"] = "{{ score }}"
+            kwargs["irrelevant_statements"] = "{{ irrelevant_statements }}"
+            kwargs["input"] = "{{ input }}"
+    elif kind == "summarization":
+        defaults = _METRIC_CFG_DEFAULTS[kind]
+        if method == "generate_questions":
+            kwargs["n"] = cfg.get("n", defaults["n"])
+            kwargs["text"] = "{{ input }}"
+        elif method == "generate_answers":
+            # 同一模板两次调用：text 为原文/摘要（运行时决定），questions
+            # 为配置的 assessment_questions 或 LLM 产物
+            kwargs["text"] = "{{ text（原文/摘要，运行时分别传 input/actual_output） }}"
+            questions = cfg.get("assessment_questions")
+            kwargs["questions"] = (
+                "\n".join(str(q) for q in questions) if questions else "{{ questions }}"
+            )
+        elif method == "generate_alignment_verdicts":
+            kwargs["original_text"] = "{{ truths }}"
+            kwargs["summary_claims"] = "{{ claims }}"
+    elif kind == "json_correctness":
+        if method == "generate_reason":
+            kwargs["actual_output"] = "{{ actual_output }}"
+            schema = cfg.get("schema")
+            # 与运行时同款：Pydantic model_json_schema 序列化（YAML 内联 schema）
+            if schema is not None:
+                from metrics_loader import _schema_to_model
+
+                kwargs["expected_schema"] = json.dumps(
+                    _schema_to_model(schema).model_json_schema(),
+                    ensure_ascii=False, indent=4,
+                )
+            else:
+                kwargs["expected_schema"] = "{{ expected_schema }}"
+            # 本地校验结果；is_valid=true 时短路不调 LLM，此模板只在 false 时走
+            kwargs["is_valid_json"] = False
+
+    # 渲染：未提供值的占位符（{{ xxx }} 字符串本身）由 Jinja 忠实输出
+    return resolve_template(
+        "metrics", _TEMPLATE_CLASSES[kind], method, **kwargs
+    )
+
+
 def dump_prompt_doc(task: str, spec: dict, out_dir: str, run_id: str = None) -> str:
     """生成本次任务的提示词文档：只含给模型的 user 原文（system 一律为无）。
 
@@ -531,15 +659,20 @@ def dump_prompt_doc(task: str, spec: dict, out_dir: str, run_id: str = None) -> 
         kind = cfg.get("metric", "geval")
         entry = _METRIC_TEMPLATES.get(kind)
         if not entry:
-            continue  # json_correctness / pattern_match 等本地判定，无提示词
+            continue  # pattern_match 等纯本地判定，无提示词
         metric_dir, templates = entry
         n += 1
         lines.append(f"## {n}. {cfg.get('name', key)}")
         lines.append("")
         for tpl in templates:
-            content = _raw_template(metric_dir, tpl)
-            if kind == "geval" and tpl == "generate_evaluation_steps":
-                content = content.replace("{{ criteria }}", cfg.get("criteria", "{{ criteria }}"))
+            # 渲染：配置类占位符填实际值（criteria/limit/n/schema 等），
+            # 用例字段与运行时中间产物保留 {{ ... }} 原样
+            try:
+                content = _render_template(kind, tpl, cfg)
+            except Exception as e:
+                # 渲染失败退回原始模板（不因文档生成中断评估）
+                content = _raw_template(metric_dir, tpl)
+                content = f"[渲染失败退回原文: {e}]\n\n{content}"
             lines.append(f"### user（{tpl}）")
             lines.append("")
             lines.append("```")

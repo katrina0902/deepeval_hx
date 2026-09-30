@@ -1,6 +1,6 @@
 # `deepeval.metrics` — prompt templates
 
-Contributor reference for LLM evaluation prompts used by built-in metrics.
+内置评估指标所使用的大模型评估提示词，供贡献者参考。
 
 ## Why templates work this way
 
@@ -18,7 +18,7 @@ So shipped prompts now live in a single bundled [`templates.json`](../metric_tem
 
 ### Why `.txt` files live next to each metric
 
-`templates.json` is still awkward to edit by hand (escaping, huge lines, Jinja inside JSON). Contributors therefore maintain **plain `.txt` sources** beside each metric and compile them into `templates.json` before release.
+直接手动编辑 `templates.json` 体验很差：需要处理转义符、单行过长、JSON 内部嵌套 Jinja 语法等问题。所以贡献者维护**纯文本 `.txt` 源文件**，发布前再编译生成 `templates.json`。
 
 That gives you:
 

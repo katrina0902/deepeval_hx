@@ -49,7 +49,8 @@ metrics:
     metric: faithfulness
     name: "事实忠实度"
     evaluation_params: [input, actual_output, retrieval_context]
-    retrieval_fields: [current_mediation_record.dialogue_text]
+    # retrieval_fields: [current_mediation_record.dialogue_text]
+    retrieval_fields: [current_mediation_record.dialogue_text,case_info]
     threshold: 0.8
 
   # ---- 以下指标按需定制素材（retrieval_fields）与被评输出（output_field）----
@@ -64,16 +65,16 @@ metrics:
   commitment_chain:
     metric: geval
     name: "方案承诺演变履约链完整度"
-    criteria: "检查plan_feedback_and_commitments是否完整还原了当事人的承诺演变与履约链路，仅包含当事人承诺，不包含其他内容：1. 是否完整提取每一轮承诺、承诺修改、履约时间节点；2. 是否遗漏关键承诺变更；3. 是否编造对话不存在的承诺内容；4. 是否错误合并多轮不同承诺，扭曲演变顺序；5.若输入材料中不存在任何承诺链，则该字段采用上一轮的plan_feedback_and_commitments或不输出任何内容，填入臆造内容为错误；5.评估时先判断演变链是否存在，再评完整度。"
+    criteria: "检查plan_feedback_and_commitments是否完整还原了当事人的承诺演变与履约链路，仅包含当事人承诺及演变，不包含其他内容：1. 是否完整提取每一轮承诺、承诺修改、履约时间节点；2. 是否遗漏关键承诺变更；3. 是否编造对话不存在的承诺内容；4. 是否错误合并多轮不同承诺，扭曲演变顺序；5.若输入材料中不存在任何承诺链，则该字段采用上一轮的plan_feedback_and_commitments或不输出任何内容，填入臆造内容为错误；5.评估时先判断演变链是否存在，再评完整度。"
     evaluation_params: [input, actual_output, retrieval_context]
-    threshold: 0.7
+    threshold: 0.8
     retrieval_fields: [current_mediation_record]
     output_field: key_communication_facts.plan_feedback_and_commitments
 
   lever_value:
     metric: geval
     name: "调解抓手博弈价值度"
-    criteria: "评估mediation_levers提炼的调解抓手是否具有博弈价值：抓手应指向可实际施压或促成让步的信息（如失业可申请分期、逾期时长影响征信、对方有还款意愿但缺能力），而非空泛表述（如'加强沟通'、'保持联系'）。有价值的抓手应说明其可运用方向；case_info信息本身不作为调解抓手；输入中无可用抓手时采用上一轮的mediation_levers或不输出任何内容。"
+    criteria: "评估mediation_levers提炼的调解抓手是否具有博弈价值：抓手应指向可实际施压或促成让步的信息（比如对方有还款意愿但缺能力，有能力还款但却还款意愿等），而非空泛表述（如'加强沟通'、'保持联系'）。有价值的抓手应说明其可运用方向；case_info信息本身不作为调解抓手；输入中无可用抓手时采用上一轮的mediation_levers或不输出任何内容。"
     evaluation_params: [input, actual_output, retrieval_context]
     threshold: 0.7
     retrieval_fields: [case_info, current_mediation_record]
@@ -82,7 +83,7 @@ metrics:
   compliance_risk_capture:
     metric: geval
     name: "高敏合规与客诉风险捕获率"
-    criteria: "评估 risk_items 对高风险信号的捕获完整度。必查信号：当事人情绪激烈/辱骂（客诉风险）、身份存疑或冒用（合规风险）、提及投诉/媒体/诉讼（升级风险）、泄露无关第三人信息（隐私合规）。输入中存在但输出遗漏的信号计为漏捕；无中生有的风险项计为误报；在模型输出其他字段提及的信息不作为风险信号；输入中无风险信号时模型实际输出完全置空。"
+    criteria: "评估 risk_items 对高风险信号的捕获完整度。必查信号：被申请人/债务人情绪激烈/辱骂（客诉风险）、身份存疑或冒用（合规风险）、提及投诉/媒体/诉讼（升级风险）、泄露无关第三人信息（隐私合规）。输入中存在但输出遗漏的信号计为漏捕；无中生有的风险项计为误报；在模型输出其他字段提及的信息不作为风险信号；长期逾期、申请人提出诉讼不作为风险信号；输入中无风险信号时模型实际输出完全置空。"
     evaluation_params: [input, actual_output, retrieval_context]
     threshold: 0.8
     retrieval_fields: [current_mediation_record.dialogue_text]
@@ -104,19 +105,40 @@ metrics:
     threshold: 0.8
     retrieval_fields: [current_mediation_record]
 
-  mediator:
+# 面向落地使用门槛，聚焦文本好不好读、能不能快速抓重点（重体验）
+  mediator_usability:
     metric: geval
     name: "调解员使用友好度"
-    criteria: "你是一名资深债务纠纷调解员，不检查内容是否真实、有无法律错误，你只评估：这份模型输出，调解员办案时好不好用，能不能辅助调解准备、减少整理案情的工作量。"
+    criteria: "判断模型输出文本是否便于调解员直接阅读和现场使用，能不能辅助调解准备、减少整理案情的工作量，调解员长文本阅读能力有限。仅评估阅读易用性，不评估业务建议质量，不检查内容是否真实、有无法律错误。"
     evaluation_steps:
       - "1. 仅从调解员办案视角评估，**不校验内容事实对错（事实正确性由其他指标评估）。且已经知晓案件基本信息（例如申请人、平台、阶段、纠纷类型、标的、逾期天数等），无需模型输出整合。**；"
       - "2. 是否提炼出调解员办案需要的关键信息，减少调解员自己梳理案情的工作量；"
-      - "3. 输出内容是否便于调解员直接使用（不校验输出的json格式）：提供可参考沟通要点、风险提示、调解推进思路等；"
-      - "4. 适配调解员特点：调解员普遍文化程度不高、长文本阅读能力弱。评估文本是否简短、语言通俗，避免大段密集文字、晦涩书面术语、超长段落；"
-      - "5. 综合判断：调解员拿到该回复，是否可以直接用于调解沟通准备，减少备课时间。"
+      - "3. 检查核心信息是否前置，调解员扫一眼就能抓住重点；"
+      - "4. 输出内容是否便于调解员直接使用（不校验输出的json格式）：提供可参考沟通要点、风险提示、调解推进思路等；"
+      - "5. 适配调解员特点：调解员普遍文化程度不高、长文本阅读能力弱。评估文本是否简短、语言通俗，避免大段密集文字、晦涩书面术语、超长段落；"
+      - "6. 综合判断：调解员拿到该回复，是否可以直接用于调解沟通准备，减少备课时间。"
     evaluation_params: [input, actual_output, retrieval_context]
     threshold: 0.8
     retrieval_fields: [current_mediation_record]
+
+# 模型输出是否提供多角度调解思路、备选方案，不只做事实复述；给到调解员额外可选用的调解策略，启发调解工作。（落地价值）
+# 【重要】本指标分数越高=本次挖掘出来的Prompt缺陷分析质量越好；不等于模型效果差。
+# 业务统计时，如需衡量模型是否存在缺陷：业务健康分 = 1 - score
+  # mediator_suggestion:
+  #   metric: geval
+  #   name: "业务Prompt缺陷挖掘"
+  #   criteria: "站在一线债务调解员的业务视角，基于输入与模型实际输出，分析底层业务Prompt存在的缺陷，输出具体、可落地的Prompt修改建议。仅评估缺陷分析与修改建议质量，不评估文本可读性。"
+  #   evaluation_steps:
+  #       - "1. 以调解员日常调解工作的真实使用需求为基准，对比输入和模型输出，识别模型输出不符合调解员业务期望的地方。"
+  #       - "2. 根据识别到的问题，反向定位业务Prompt缺失的角色约束、业务规则、输出要求或边界限制。"
+  #       - "3. 逐条写明当前业务Prompt存在的具体缺陷，禁止空泛笼统的描述。"
+  #       - "4. 针对每一条缺陷，给出可直接复制使用的Prompt修改方案，例如新增约束、调整角色定义、补充输出规范。"
+  #       - "5. 所有分析和修改建议必须贴合债务调解现场场景，符合调解员实际工作诉求。"
+  #       - "6. 分数范围0~1：1分代表精准找到全部缺陷、修改建议贴合调解员工作且可直接使用；0分无法找到任何Prompt缺陷。"
+  #       - "7. 在reason字段结构化输出：【调解员视角发现的Prompt缺陷】+【对应的Prompt修改建议】。"
+  #   evaluation_params: [input, actual_output, retrieval_context]
+  #   threshold: 0.8
+  #   retrieval_fields: [current_mediation_record]
 
   # extraction_completeness:
   #   metric: geval

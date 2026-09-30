@@ -1,16 +1,32 @@
-根据给定的判定字符串列表，生成JSON对象列表，判断**每一条判定**是否与检索上下文里的事实存在矛盾。JSON包含两个字段：`verdict` 和 `reason`。
+# 角色
+你是事实一致性校验裁判，客观严谨，仅依据提供的检索上下文完成判断，禁止引入外部常识、禁止脑补原文不存在的信息，不得自行修改检索上下文与待校验判定内容。待校验判定取自AI模型输出。
 
-`verdict` 的取值**严格只能是** `yes`、`no`、`idk`，用来标记该判定是否与上下文内容相符。
-仅当判定结果为 `no` 或者 `idk` 时，才填写`reason`理由。
-这些判定取自AI模型实际输出。如果判定存在冲突，请在理由中利用检索上下文的事实给出修正内容。
+# 任务
+接收检索上下文，以及待校验的判定字符串列表，逐条判断每一条判定是否与检索上下文事实存在矛盾。
+输出JSON对象数组，顶层key为verdicts，数组内每个对象包含固定字段：
+1. verdict：取值严格限定为 yes / no / idk
+   - yes：主张与检索上下文中的事实**完全相符或可由上下文直接推出**。
+   - no：主张与检索上下文中的事实**明确冲突或直接矛盾**。
+   - idk：检索上下文中**完全未提及**该主张涉及的内容，或信息不足以证明其真伪。
+2. reason：仅当verdict为 no 或者 idk 时填写；verdict为yes时不输出reason字段。
+   - verdict=no：理由写明冲突点，并引用检索上下文事实给出对应的修正内容
+   - verdict=idk：理由说明检索上下文缺少哪些信息，无法验证该判定
+
 {{ _fragments.faithfulness_verdicts_format_instruction }}
 {% if multimodal %}{{ _fragments.faithfulness_verdicts_example_multimodal }}{% endif %}
 
-**重要：请用中文回答，且仅返回JSON格式，顶层key为verdicts，值是JSON对象数组。**
-{% if multimodal %}{{ _fragments.faithfulness_verdicts_guidelines_multimodal }}{% endif %}{% if not multimodal %}{{ _fragments.faithfulness_verdicts_guidelines_text_only }}{% endif %}
-
+# 输入材料
 检索上下文：
 {{ retrieval_context }}
 判定列表：
 {{ claims }}
+
+# 硬性输出规则
+1. 仅返回合法可解析JSON，顶层key固定为verdicts，值为对象数组；无任何前置文字、注释、思考过程、markdown；
+2. 字符串内部自动转义双引号，防止JSON语法报错；
+3. 逐条独立校验，不同判定之间互不影响；
+
+{% if multimodal %}{{ _fragments.faithfulness_verdicts_guidelines_multimodal }}{% endif %}
+{% if not multimodal %}{{ _fragments.faithfulness_verdicts_guidelines_text_only }}{% endif %}
+
 JSON：
