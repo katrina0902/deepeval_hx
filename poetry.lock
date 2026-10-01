@@ -1057,6 +1057,23 @@ humanfriendly = ">=9.1"
 cron = ["capturer (>=2.4)"]
 
 [[package]]
+name = "confident-trace"
+version = "0.1.2"
+description = "OpenTelemetry-first tracing for AI applications"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = []
+
+[package.dependencies]
+opentelemetry-api = ">=1.39,<2"
+opentelemetry-exporter-otlp-proto-grpc = ">=1.39,<2"
+opentelemetry-exporter-otlp-proto-http = ">=1.39,<2"
+opentelemetry-instrumentation-asgi = ">=0.60b0,<1"
+opentelemetry-sdk = ">=1.39,<2"
+wrapt = ">=1.17,<3"
+
+[[package]]
 name = "crewai"
 version = "0.148.0"
 description = "Cutting-edge framework for orchestrating role-playing, autonomous AI agents. By fostering collaborative intelligence, CrewAI empowers agents to work together seamlessly, tackling complex tasks."
@@ -11194,4 +11211,4 @@ inspect = ["pyperclip", "textual"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9, <4.0"
-content-hash = "01aa6352de506ef5ffdfa71c8c068af1ee42b1190219f4e6623de09c6227d724"
+content-hash = "d7e69ee09066a8e570fbacd42dd1dfef17d512f6ebdfc04fe93c4ce066ee5611"

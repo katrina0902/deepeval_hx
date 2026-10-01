@@ -16,6 +16,7 @@ from qdrant_client import QdrantClient
 from tqdm import tqdm
 from langchain.docstore.document import Document as LangchainDocument
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from confident_trace import init, span
 from openai import OpenAI
 import deepeval
 
@@ -24,6 +25,9 @@ OPENAI_API_KEY = "<OPENAI_API_KEY>"
 
 # Get your Confident AI API key from https://app.confident-ai.com
 CONFIDENT_AI_API_KEY = "<CONFIDENT_AI_API_KEY>"
+
+# Confident Trace reads CONFIDENT_API_KEY from the environment.
+init()
 
 # Get a FREE forever cluster at https://cloud.qdrant.io/
 # More info: https://qdrant.tech/documentation/cloud/create-cluster/
@@ -79,8 +83,8 @@ client.add(
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 
+@span(type="retriever")
 def query_with_context(query, limit):
-
     search_result = client.query(
         collection_name=COLLECTION_NAME, query_text=query, limit=limit
     )
