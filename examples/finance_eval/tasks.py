@@ -75,12 +75,12 @@ CATEGORIES = {
 TASKS = {
     # ===== 信息提取大类 =====
     "extraction/case_summary": {
-        "desc": "案情概览：data/files 导出 CSV，按 ai_task 筛选",
+        "desc": "案情概览",
         "data": os.path.join(_EVALS_DIR, "data", "files", "案情概览testcase.csv"),
         "criteria": os.path.join(_EVALS_DIR, "categories", "extraction", "case_summary.yaml"),
         # 默认采样条数：每次运行最多取前 N 条；留空/不配 → 取全部
         # （命令行 --limit N 可覆盖该默认值）
-        "limit": 10,
+        "limit": 2,
         # 外部导出 CSV 列名 → LLMTestCase 字段/元数据的映射
         "columns": {
             "ai_task": "案情概览",            # 只取该 ai_task 的行
@@ -90,17 +90,19 @@ TASKS = {
             "trigger_time": "trigger_time",   # 报告展示列
         },
     },
-
-    "extraction/contact_record": {
-        "desc": "联系记录提取：从通话记录提取联系结果与后续动作",
-        "data": os.path.join(_EVALS_DIR, "data", "extraction", "contact_record.csv"),
-        "criteria": os.path.join(_EVALS_DIR, "categories", "extraction", "contact_record.yaml"),
-    },
     # ===== 生成大类 =====
-    "generation/mediation_script": {
-        "desc": "调解话术生成：面向被申请人的沟通话术",
-        "data": os.path.join(_EVALS_DIR, "data", "generation", "mediation_script.csv"),
-        "criteria": os.path.join(_EVALS_DIR, "categories", "generation", "mediation_script.yaml"),
+    "generation/call_strategy": {
+        "desc": "去电思路生成",
+        "data": os.path.join(_EVALS_DIR, "data", "files", "去电思路生成testcase.csv"),
+        "criteria": os.path.join(_EVALS_DIR, "categories", "generation", "call_strategy.yaml"),
+        "limit": 10,
+        "columns": {
+            "ai_task": "去电思路",            # 只取该 ai_task 的行
+            "input": "input_text",            # 用户输入列
+            "actual_output": "ai_response_content",  # 模型输出列
+            "case_id": "case_id",             # 报告展示列
+            "trigger_time": "trigger_time",   # 报告展示列
+        },
     },
     # ===== 判断大类 =====
     "judgment/communication_validity": {

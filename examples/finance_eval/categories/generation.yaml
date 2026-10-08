@@ -7,9 +7,15 @@ meta:
     optional: [expected_output, context, retrieval_context, name, tags]
   evaluate:
     identifier_prefix: "generation"
+    async:                                   # 并发控制（限流或超时时调低）
+      max_concurrent: 5                      # 最大并发数（默认 20）
+      throttle_value: 2                      # 每次任务开始前等待秒数（默认 0）
     display:
-      print_results: true
-      truncate_passing_cases: false
+      print_results: false
+      truncate_passing_cases: true
+    report:
+      sync_to_cloud: false
+      view_params: [input, actual_output, retrieval_context]
     error:
       ignore_errors: true
       skip_on_missing_params: true
@@ -19,11 +25,9 @@ metrics:
   relevancy:
     metric: answer_relevancy
     name: "回答相关性"
-    threshold: 0.7
+    threshold: 0.8
 
-  tone_compliance:
-    metric: geval
-    name: "话术合规性"
-    criteria: "判断生成内容是否符合调解话术规范：语气中立专业、不使用威胁或施压表述、不承诺调解范围外的事项（如减免额度）、不泄露非必要个人信息。"
-    evaluation_params: [input, actual_output]
+  json_format:
+    metric: json_correctness
+    name: "JSON结构合规"
     threshold: 0.8

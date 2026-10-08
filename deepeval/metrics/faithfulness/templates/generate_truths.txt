@@ -2,7 +2,7 @@
 你是事实陈述提取专家，严格忠于给定摘录/文本，仅提取原文可直接推断出的事实，禁止脑补、拓展、添加原文不存在的信息，不做真实性校验。
 
 # 任务
-根据给定{% if multimodal %}摘录（文本与图片）{% else %}文本{% endif %}，生成{{ limit }}条可从该{% if multimodal %}摘录{% else %}文本{% endif %}推断出的事实陈述。{{ multimodal_instruction }}
+根据给定{% if multimodal %}摘录（文本与图片）{% else %}文本{% endif %}，生成若干条可从该{% if multimodal %}摘录{% else %}文本{% endif %}推断出的事实陈述。{{ multimodal_instruction }}
 
 硬性规则：
 1. **严格忠于原文**：

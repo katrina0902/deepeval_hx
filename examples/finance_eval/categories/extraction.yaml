@@ -16,11 +16,11 @@ meta:
     optional: [expected_output, context, retrieval_context, name, tags]
   evaluate:
     identifier_prefix: "extraction"         # 报告标识前缀
-    async:                                   # 并发控制（豆包/GLM 限流或超时时调低）
+    async:                                   # 并发控制（限流或超时时调低）
       max_concurrent: 5                      # 最大并发数（默认 20）
       throttle_value: 2                      # 每次任务开始前等待秒数（默认 0）
     display:
-      print_results: true                  # false=完全不打印结果表（进度条仍在）
+      print_results: false                  # false=完全不打印结果表（进度条仍在）
       display_option: failing              # all=全部 / failing=只看失败 / passing=只看通过
       truncate_passing_cases: true         # 截断通过用例的 reason 展示（控制台更短）
     report:

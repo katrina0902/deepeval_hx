@@ -52,6 +52,20 @@ def _is_metric_successful(metric_data: MetricData) -> bool:
     return False
 
 
+def _metric_criteria(metric: BaseMetric) -> Optional[str]:
+    """GEval 的评估标准原文（criteria + evaluation_steps），非 GEval 返回 None。"""
+    criteria = getattr(metric, "criteria", None)
+    if not criteria:
+        return None
+    parts = [f"criteria: {criteria}"]
+    steps = getattr(metric, "evaluation_steps", None)
+    if steps:
+        parts.append("evaluation_steps:\n" + "\n".join(
+            f"  {i}. {s}" for i, s in enumerate(steps, 1)
+        ))
+    return "\n\n".join(parts)
+
+
 def create_metric_data(metric: BaseMetric) -> MetricData:
     if metric.error is not None:
         return MetricData(
@@ -69,6 +83,7 @@ def create_metric_data(metric: BaseMetric) -> MetricData:
             outputTokenCount=metric.output_tokens,
             verboseLogs=metric.verbose_logs,
             viewParams=getattr(metric, "view_params", None),
+            criteria=_metric_criteria(metric),
         )
     else:
         return MetricData(
@@ -86,6 +101,7 @@ def create_metric_data(metric: BaseMetric) -> MetricData:
             outputTokenCount=metric.output_tokens,
             verboseLogs=metric.verbose_logs,
             viewParams=getattr(metric, "view_params", None),
+            criteria=_metric_criteria(metric),
         )
 
 

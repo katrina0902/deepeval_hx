@@ -195,7 +195,7 @@ def evaluate(
     _skip_reset: bool = False,  # 是否跳过重置（本地评估时）
     # Fork: 是否把本次评估结果上传 Confident AI 云端。
     # True = 有 CONFIDENT_API_KEY 就上传；False = 只存本地 .deepeval_results
-    sync_to_cloud: bool = False,
+    sync_to_cloud: bool = True,
     # Configs
     async_config: Optional[AsyncConfig] = AsyncConfig(),
     display_config: Optional[DisplayConfig] = DisplayConfig(),

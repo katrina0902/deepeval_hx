@@ -124,6 +124,14 @@ details.view-params pre { margin-top: 8px; background: var(--panel2);
                           padding: 12px; font-size: 12px; color: var(--text);
                           white-space: pre-wrap; max-height: 400px; overflow: auto;
                           font-family: Consolas, monospace; }
+/* 指标汇总表内的 criteria 折叠块 */
+details.criteria summary { cursor: pointer; color: var(--cyan); font-size: 12px;
+                           user-select: none; white-space: nowrap; }
+details.criteria pre { margin-top: 8px; background: var(--panel2);
+                       border: 1px solid var(--border); border-radius: 8px;
+                       padding: 12px; font-size: 12px; color: var(--text);
+                       white-space: pre-wrap; max-height: 400px; overflow: auto;
+                       font-family: Consolas, monospace; }
 footer { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
 """
 
@@ -263,9 +271,13 @@ def generate(json_path: str, out_path: str = None, view_params: list = None) -> 
     avg_score = sum(scored) / len(scored) if scored else 0
 
     agg = {}
+    criteria_by_name = {}
     for m in all_metrics:
         name = m.get("name") or "metric"
         e = agg.setdefault(name, {"scores": [], "pass": 0, "fail": 0})
+        # criteria 全用例同值，取首个非空即可
+        if name not in criteria_by_name and m.get("criteria"):
+            criteria_by_name[name] = m["criteria"]
         if isinstance(m.get("score"), (int, float)):
             e["scores"].append(m["score"])
         if m.get("success"):
@@ -278,8 +290,14 @@ def generate(json_path: str, out_path: str = None, view_params: list = None) -> 
         total = e["pass"] + e["fail"]
         rate = e["pass"] / total * 100 if total else 0
         color = "var(--green)" if rate >= 80 else "var(--amber)" if rate >= 50 else "var(--red)"
+        crit = criteria_by_name.get(name)
+        crit_html = (
+            f'<details class="criteria"><summary>criteria</summary>'
+            f"<pre>{html.escape(crit)}</pre></details>"
+            if crit else ""
+        )
         agg_rows.append(
-            f"""<tr><td>{html.escape(name)}</td>
+            f"""<tr><td>{html.escape(name)}{crit_html}</td>
 <td><span class="score-wrap"><span class="bar"><i style="width:{avg*100:.0f}%;background:{color}"></i></span>
 <span class="score-num" style="color:{color}">{avg:.2f}</span></span></td>
 <td>{e['pass']} / {e['fail']}</td><td>{rate:.0f}%</td><td>{total}</td></tr>"""

@@ -56,6 +56,9 @@ class MetricData(BaseModel):
     # actual_output / retrieval_context，报告按指标展示实际送评内容）。
     # 由评估工程的 MetricView 在 measure 时写入，普通指标为 None。
     view_params: Optional[Dict] = Field(None, alias="viewParams")
+    # Fork: GEval 的评估标准原文（criteria + evaluation_steps），
+    # 报告的指标汇总区展示"该指标按什么标准打分"，普通指标为 None。
+    criteria: Optional[str] = Field(None)
 
 
 class BaseApiSpan(BaseModel):

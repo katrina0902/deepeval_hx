@@ -161,6 +161,19 @@ def generate(json_path: str, task: str, out_dir: str = None, include_reason: boo
         rate = e["pass"] / total * 100 if total else 0
         lines.append(f"| {_md_escape(name)} | {a:.2f} | {e['pass']}/{e['fail']} | {rate:.0f}% |")
 
+    # 各指标 criteria（评估标准原文，默认收起；GEval 类指标才有）
+    criteria_by_name = {}
+    for m in all_metrics:
+        name = m.get("name") or "metric"
+        if name not in criteria_by_name and m.get("criteria"):
+            criteria_by_name[name] = m["criteria"]
+    if criteria_by_name:
+        lines += ["", "### 评估标准（criteria）", ""]
+        for name in order:
+            crit = criteria_by_name.get(name)
+            if crit:
+                lines.append(_details_block(f"criteria · {name}", crit))
+
     lines += ["", "## 用例明细", ""]
     for idx, tc in enumerate(cases, 1):
         md = tc.get("metricsData") or []

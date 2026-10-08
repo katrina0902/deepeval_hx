@@ -1,0 +1,66 @@
+# 任务：去电思路生成（generation/call_strategy）
+# 与大类 generation.yaml 合并
+# 数据：data/files/去电思路生成testcase.csv（ai_task=去电思路，906 行）
+# input_text 字段：case_info（含调解标准）/ previous_communication_summary /
+#                  current_mediation_record（含 call_tag、dialogue_text）
+# ai_response_content 字段：outbound_call_strategy（单字段分点文本）
+
+meta:
+  hyperparameters:
+    template_version: "0817"
+  input_template: |
+    任务：基于调解对话生成下一次去电的调解思路。
+    调解对话素材：【见retrieval_context】
+    历史沟通总结：{previous_communication_summary}
+
+metrics:
+  # ---- JSON 合规：按输出契约校验 outbound_call_strategy 单字段 ----
+  json_format:
+    metric: json_correctness
+    name: "JSON结构合规"
+    threshold: 1
+    raw_input: true
+    schema:
+      outbound_call_strategy: str
+
+  # ---- 忠实度：策略不得虚构承诺/反馈/进度 ----
+  faithfulness:
+    metric: faithfulness
+    name: "策略事实忠实度"
+    evaluation_params: [input, actual_output, retrieval_context]
+    retrieval_fields: [current_mediation_record.dialogue_text, case_info]
+    threshold: 0.8
+
+  summary_quality:
+    metric: summarization
+    name: "要点覆盖质量"
+    threshold: 0.7
+    input_material: true
+    retrieval_fields: [previous_communication_summary, current_mediation_record.dialogue_text]
+
+  de_escalation:
+    metric: geval
+    name: "情绪安抚适配"
+    criteria: "判断生成的话术是否针对输入中当事人的情绪状态做了适配：当事人抵触/愤怒时应先安抚再陈述事由，态度中立时可直入主题。话术不得激化矛盾（如催促、定性指责）。"
+    evaluation_params: [input, actual_output, retrieval_context]
+    threshold: 0.7
+    retrieval_fields: [current_mediation_record.dialogue_text]
+    output_field: outbound_call_strategy
+
+  tone_compliance:
+    metric: geval
+    name: "话术合规性"
+    criteria: "判断生成内容是否符合调解话术规范：语气中立专业、不使用威胁或施压表述、不承诺调解范围外的事项（如减免额度）、不泄露非必要个人信息。"
+    evaluation_params: [input, actual_output, retrieval_context]
+    threshold: 0.8
+    output_field: outbound_call_strategy
+
+  # 策略推进有效性：是否围绕最近未完成节点推进（而非从通用方案重新开始）
+  strategy_progression:
+    metric: geval
+    name: "策略推进有效性"
+    criteria: "评估去电思路是否基于案件最新进展制定：1. 优先围绕最近的未完成节点（金额/日期/材料/反馈）制定策略；2. 不得忽略已有方案与履行进度，重新从通用一次性结清或分期方案开始；3. 仅当原方案失效或无法继续履行时才调整方案，且调整须符合输入中的调解标准；4. 无效沟通/未沟通且无新信息时，应沿用已有去电思路的有效内容。"
+    evaluation_params: [input, actual_output, retrieval_context]
+    threshold: 0.8
+    retrieval_fields: [case_info, current_mediation_record, previous_communication_summary]
+    output_field: outbound_call_strategy

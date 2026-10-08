@@ -124,6 +124,9 @@ class MetricView(BaseMetric):
                         渲染后的任务模板，素材走 retrieval_context）
     - raw_input:        true 时 input 用整个 input_text 原始 JSON 串
                         （json_correctness 等以完整输入为对象的指标用）
+    - input_template:   指标级 input 模板（{参数名} 引用 input_text JSON 字段）。
+                        配置则重渲染并覆盖用例的通用 input（优先于任务级
+                        meta.input_template）；未配置沿用通用渲染结果
 
     未配置 retrieval_fields/output_field 时原样透传（行为与直接用内层指标一致）。
     继承 BaseMetric 以通过 evaluate 的类型校验；measure 委托内层指标，
@@ -132,7 +135,8 @@ class MetricView(BaseMetric):
 
     def __init__(self, inner: BaseMetric, retrieval_fields: List[str] = None,
                  output_field: str = None, input_material: bool = False,
-                 raw_input: bool = False):
+                 raw_input: bool = False, threshold_mode: str = "min",
+                 input_template: str = None):
         # inner 一律重建独立副本（构造式拷贝，模型引用共享，与 deepeval 的
         # copy_metrics 同语义）：deepeval 异步执行会给每个用例 copy_metrics
         # 重建包装器（type(metric)(**vars(metric))，inner 传同一引用）——若不
@@ -148,6 +152,7 @@ class MetricView(BaseMetric):
         self.output_field = output_field
         self.input_material = input_material
         self.raw_input = raw_input
+        self.input_template = input_template
 
     # ---- 属性直通：读 _RESULT_ATTRS 走内层，其余找不到再兜底 __getattr__ ----
     def __getattribute__(self, item):
@@ -179,17 +184,23 @@ class MetricView(BaseMetric):
                 or test_case.actual_output
             )
             update["retrieval_context"] = None
-        elif self.retrieval_fields:
-            blocks = []
-            for f in self.retrieval_fields:
-                text = field_to_text(_extract_field(params, f))
-                if text:
-                    blocks.append(f"【{f}】\n{text}")
-            if self.input_material:
-                # summarization 类：基准事实来自 input，素材直接替换
-                update["input"] = "\n\n".join(blocks)
-            else:
-                update["retrieval_context"] = blocks or None
+        else:
+            # input 与 retrieval_context 是正交关注点，分别独立判定：
+            if self.input_template:
+                # 指标级 input 模板：优先于任务级通用模板，按本指标视角重渲染
+                # （字段缺失渲染为空串，与任务级模板行为一致）
+                update["input"] = render_template(self.input_template, params)
+            if self.retrieval_fields:
+                blocks = []
+                for f in self.retrieval_fields:
+                    text = field_to_text(_extract_field(params, f))
+                    if text:
+                        blocks.append(f"【{f}】\n{text}")
+                if self.input_material:
+                    # summarization 类：基准事实来自 input，素材直接替换
+                    update["input"] = "\n\n".join(blocks)
+                else:
+                    update["retrieval_context"] = blocks or None
         output_params = getattr(test_case, "_eval_output", None) or {}
         if self.output_field:
             picked = _extract_field(output_params, self.output_field)
@@ -400,13 +411,19 @@ def build_metrics(category_config: str, task_criteria: str, task: str, model=Non
             if "retrieval_context" not in p:
                 p.append("retrieval_context")
         metric = builder(cfg, task, model)
-        if any(cfg.get(k) for k in ("retrieval_fields", "output_field", "input_material", "raw_input")):
+        if any(cfg.get(k) for k in ("retrieval_fields", "output_field", "input_material", "raw_input", "threshold_mode", "input_template")):
+            if cfg.get("threshold_mode") not in (None, "min", "max"):
+                raise ValueError(
+                    f"{key}: threshold_mode 只能是 min/max（当前: {cfg.get('threshold_mode')}）"
+                )
             metric = MetricView(
                 metric,
                 retrieval_fields=cfg.get("retrieval_fields"),
                 output_field=cfg.get("output_field"),
                 input_material=bool(cfg.get("input_material")),
                 raw_input=bool(cfg.get("raw_input")),
+                threshold_mode=cfg.get("threshold_mode") or "min",
+                input_template=cfg.get("input_template"),
             )
         metrics.append(metric)
     return metrics
